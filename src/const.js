@@ -9,6 +9,7 @@ export const RAINBOW_COLORS = [
 
 export const PLAYER_SPEED = 112;
 export const TURN_ANGLE = Math.PI / 6;
+export const RAINBOW_DURATION = 5;
 export const TRAIL_POINT_DISTANCE = 5;
 export const MINIMUM_LOOP_LENGTH = 18;
 export const COLLISION_IGNORE_POINTS = 12;

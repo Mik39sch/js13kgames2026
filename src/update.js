@@ -3,6 +3,7 @@ import {
   COLLISION_IGNORE_POINTS,
   MINIMUM_LOOP_LENGTH,
   PLAYER_SPEED,
+  RAINBOW_DURATION,
   SCREEN_EDGE_PADDING,
   TRAIL_POINT_DISTANCE,
   TURN_ANGLE,
@@ -63,7 +64,8 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
   game.score += earnedScore;
   game.multiplier = multiplier;
   game.successFlash = 1;
-  game.trail = [{ x: game.player.x, y: game.player.y }];
+  game.rainbowTimeRemaining = 0;
+  game.trail = [];
 }
 
 /** 新しい軌跡の線分が過去の虹と交差したか調べる。 */
@@ -107,14 +109,38 @@ function updateTrail(game) {
   game.trail.push(currentPoint);
 }
 
+/** 虹の発動入力と残り時間を更新し、終了時に軌跡を消去する。 */
+function updateRainbow(game, input, deltaTime) {
+  const activationRequested = input.consumeRainbowActivation();
+
+  if (activationRequested && game.rainbowTimeRemaining <= 0) {
+    game.rainbowTimeRemaining = RAINBOW_DURATION;
+    game.trail = [{ x: game.player.x, y: game.player.y }];
+  }
+
+  if (game.rainbowTimeRemaining <= 0) return;
+
+  game.rainbowTimeRemaining = Math.max(
+    0,
+    game.rainbowTimeRemaining - deltaTime,
+  );
+
+  if (game.rainbowTimeRemaining === 0) {
+    game.trail = [];
+  }
+}
+
 /** 1フレーム分のゲームロジックを順番に更新する。 */
 export function updateGame(game, input, viewport, deltaTime) {
   game.elapsedTime += deltaTime;
   if (game.isGameOver) return;
 
+  updateRainbow(game, input, deltaTime);
   updatePlayer(game, input, viewport, deltaTime);
   if (game.isGameOver) return;
 
-  updateTrail(game);
+  if (game.rainbowTimeRemaining > 0) {
+    updateTrail(game);
+  }
   updateWorld(game, viewport, deltaTime);
 }

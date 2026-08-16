@@ -5,6 +5,16 @@
 export function createInput() {
   const pendingTurns = [];
   let restartRequested = false;
+  let rainbowRequested = false;
+
+  /** ポインターが画面下部のRAINBOWボタン内にあるか判定する。 */
+  function isRainbowButton(event) {
+    const isInsideHorizontally =
+      Math.abs(event.clientX - innerWidth / 2) <= 58;
+    const isInsideVertically =
+      event.clientY >= innerHeight - 92 && event.clientY <= innerHeight - 48;
+    return isInsideHorizontally && isInsideVertically;
+  }
 
   /** ポインターの画面位置を左右どちらの旋回入力として扱うか判定する。 */
   function getPointerDirection(event) {
@@ -13,8 +23,13 @@ export function createInput() {
 
   /** タッチまたはクリックした画面側への旋回を1回予約する。 */
   function handlePointerDown(event) {
-    pendingTurns.push(getPointerDirection(event));
     restartRequested = true;
+
+    if (isRainbowButton(event)) {
+      rainbowRequested = true;
+    } else {
+      pendingTurns.push(getPointerDirection(event));
+    }
   }
 
   addEventListener("keydown", (event) => {
@@ -24,6 +39,10 @@ export function createInput() {
 
     if (event.key === " " || event.key === "Enter") {
       restartRequested = true;
+    }
+
+    if (!event.repeat && event.key === " ") {
+      rainbowRequested = true;
     }
 
     if (!event.repeat && ["ArrowLeft", "a", "A"].includes(event.key)) {
@@ -50,9 +69,17 @@ export function createInput() {
       return requested;
     },
 
+    /** 保留中の虹発動入力を返し、その入力を消費する。 */
+    consumeRainbowActivation() {
+      const requested = rainbowRequested;
+      rainbowRequested = false;
+      return requested;
+    },
+
     /** リスタート前などに、まだ処理していない旋回入力を破棄する。 */
     clearPendingTurns() {
       pendingTurns.length = 0;
+      rainbowRequested = false;
     },
   };
 }

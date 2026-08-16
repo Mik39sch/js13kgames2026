@@ -300,16 +300,30 @@ function drawInterface(context, game, viewport) {
   context.fillText(`SCORE  ${game.score}`, 20, 34);
   context.font = "600 13px system-ui";
   context.fillText(
-    `RAINBOW  ${game.trail.length}   ×${game.multiplier.toFixed(1)}`,
+    `RAINBOW  ${game.rainbowTimeRemaining.toFixed(1)}s   ×${game.multiplier.toFixed(1)}`,
     20,
     56,
   );
 
+  // キーボードとタッチの両方で認識できる虹発動ボタン。
+  const buttonX = viewport.width / 2 - 58;
+  const buttonY = viewport.height - 92;
+  context.fillStyle = game.rainbowTimeRemaining > 0
+    ? "rgba(255, 255, 255, 0.45)"
+    : "rgba(91, 61, 130, 0.72)";
+  context.fillRect(buttonX, buttonY, 116, 44);
+  context.strokeStyle = "rgba(255, 255, 255, 0.8)";
+  context.lineWidth = 2;
+  context.strokeRect(buttonX, buttonY, 116, 44);
+  context.fillStyle = game.rainbowTimeRemaining > 0 ? "#5b3d82" : "#fff";
+  context.font = "700 14px system-ui";
   context.textAlign = "center";
+  context.fillText("RAINBOW", viewport.width / 2, buttonY + 27);
+
   context.fillStyle = "rgba(25, 54, 92, 0.65)";
-  context.font = "14px system-ui";
+  context.font = "13px system-ui";
   context.fillText(
-    "← → / A D または画面左右のタップで45°旋回",
+    "← → / A Dで旋回　SPACEで虹を発動",
     viewport.width / 2,
     viewport.height - 22,
   );
