@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "build": "webpack --mode production",
+    "build:zip": "npm run build && node scripts/create-zip.js",
     "build:dev": "webpack --mode development",
     "watch": "webpack --mode development --watch"
   },
   "devDependencies": {
+    "archiver": "^8.0.0",
     "webpack": "^5.101.3",
     "webpack-cli": "^6.0.1"
   }

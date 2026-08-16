@@ -13,6 +13,14 @@ npm run build
 
 productionビルドではwebpackがJavaScriptをminifyし、提出用ファイル一式を`dist`フォルダへ出力します。ビルド完了時に`dist`の合計バイト数も表示されます。
 
+提出用ZIPの生成と13KB制限の検査は、次のコマンドで実行します。
+
+```sh
+npm run build:zip
+```
+
+productionビルド後、`dist`の中身だけを最高圧縮率で`submission.zip`へ格納します。ZIPサイズが13,312 bytesを超えた場合は、コマンドがエラー終了します。
+
 - `←` / `→` または `A` / `D`: 30度旋回
 - スマートフォンでは画面の左半分 / 右半分をタップ: 30度旋回
 - `Space`または画面下部の`RAINBOW`ボタン: 虹を5秒間発動
