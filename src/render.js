@@ -141,7 +141,7 @@ function drawInterface(context, game, viewport) {
   context.fillStyle = "rgba(25, 54, 92, 0.65)";
   context.font = "14px system-ui";
   context.fillText(
-    "← → / A D または画面左右をタッチして旋回",
+    "← → / A D または画面左右のタップで45°旋回",
     viewport.width / 2,
     viewport.height - 22,
   );

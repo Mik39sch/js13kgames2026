@@ -5,7 +5,7 @@ import {
   PLAYER_SPEED,
   SCREEN_EDGE_PADDING,
   TRAIL_POINT_DISTANCE,
-  TURN_SPEED,
+  TURN_ANGLE,
 } from "./const.js";
 import {
   calculatePolygonArea,
@@ -17,7 +17,7 @@ import { updateWorld } from "./world.js";
 /** プレイヤーを入力方向へ旋回させ、自動で前進させる。 */
 function updatePlayer(game, input, viewport, deltaTime) {
   const player = game.player;
-  player.angle += input.getTurnDirection() * TURN_SPEED * deltaTime;
+  player.angle += input.consumeTurnDirection() * TURN_ANGLE;
   player.x += Math.cos(player.angle) * PLAYER_SPEED * deltaTime;
   player.y += Math.sin(player.angle) * PLAYER_SPEED * deltaTime;
 

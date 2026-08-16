@@ -41,6 +41,7 @@ function runFrame(currentTime) {
   const restartRequested = input.consumeRestart();
   if (game.isGameOver && restartRequested) {
     startGame();
+    input.clearPendingTurns();
   }
 
   updateGame(game, input, viewport, deltaTime);
