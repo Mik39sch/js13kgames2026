@@ -141,7 +141,7 @@ function drawInterface(context, game, viewport) {
   context.fillStyle = "rgba(25, 54, 92, 0.65)";
   context.font = "14px system-ui";
   context.fillText(
-    "← → / A D で旋回　灰色の雲を虹で囲もう",
+    "← → / A D または画面左右をタッチして旋回",
     viewport.width / 2,
     viewport.height - 22,
   );
@@ -169,7 +169,7 @@ function drawGameOver(context, game, viewport) {
   context.fillText(`SCORE  ${game.score}`, viewport.width / 2, viewport.height * 0.5);
   context.font = "16px system-ui";
   context.fillText(
-    "SPACE / ENTER でリスタート",
+    "SPACE / ENTER / 画面タップでリスタート",
     viewport.width / 2,
     viewport.height * 0.57,
   );
