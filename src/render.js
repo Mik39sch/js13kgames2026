@@ -95,33 +95,201 @@ function drawRainbow(context, game) {
   });
 }
 
-/** 基本図形を組み合わせてプレイヤーのユニコーンを描画する。 */
+/** 後方へなびく虹色の尾を線で描画する。 */
+function drawUnicornTail(context) {
+  RAINBOW_COLORS.forEach((color, index) => {
+    context.strokeStyle = color;
+    context.lineWidth = 2.5;
+    context.beginPath();
+    context.moveTo(-17, -2 + index * 0.8);
+    context.quadraticCurveTo(-25, -9 + index * 1.6, -31, -2 + index * 1.8);
+    context.stroke();
+  });
+}
+
+/** 首の後ろへ虹色のたてがみを房状に描画する。 */
+function drawUnicornMane(context) {
+  RAINBOW_COLORS.forEach((color, index) => {
+    context.fillStyle = color;
+    context.beginPath();
+    context.arc(5 + index * 1.7, -8 - index * 0.8, 3, 0, Math.PI * 2);
+    context.fill();
+  });
+}
+
+/** 真上・真下へ進む際に使う、前後方向が明確なトップダウン姿を描画する。 */
+function drawVerticalUnicorn(context, isFacingDown) {
+  if (isFacingDown) context.rotate(Math.PI);
+
+  // 後方へ広がる虹色の尾。
+  RAINBOW_COLORS.forEach((color, index) => {
+    context.strokeStyle = color;
+    context.lineWidth = 2.2;
+    context.beginPath();
+    context.moveTo((index - 2.5) * 0.7, 15);
+    context.quadraticCurveTo(
+      (index - 2.5) * 1.4,
+      23,
+      (index - 2.5) * 2,
+      29,
+    );
+    context.stroke();
+  });
+
+  // 上から見える4本の脚を胴体の左右へ配置する。
+  context.strokeStyle = "#e9dff5";
+  context.lineWidth = 4.5;
+  for (const legY of [-2, 9]) {
+    for (const side of [-1, 1]) {
+      context.beginPath();
+      context.moveTo(side * 6, legY);
+      context.lineTo(side * 13, legY + 2);
+      context.stroke();
+    }
+  }
+
+  // 縦長の胴体、首、頭、鼻先を進行方向へ一直線に置く。
+  context.fillStyle = "#fff8ff";
+  context.beginPath();
+  context.ellipse(0, 3, 9, 16, 0, 0, Math.PI * 2);
+  context.fill();
+  context.beginPath();
+  context.ellipse(0, -12, 7, 10, 0, 0, Math.PI * 2);
+  context.fill();
+  context.beginPath();
+  context.ellipse(0, -21, 4.5, 7, 0, 0, Math.PI * 2);
+  context.fill();
+
+  // 真上・真下から見たたてがみを首と背中の中央線上に並べる。
+  RAINBOW_COLORS.forEach((color, index) => {
+    context.fillStyle = color;
+    context.beginPath();
+    context.arc(0, -9 + index * 3.2, 2.6, 0, Math.PI * 2);
+    context.fill();
+  });
+
+  // 左右の耳と中央の角で、進行方向側を強調する。
+  context.beginPath();
+  context.moveTo(-5, -17);
+  context.lineTo(-9, -25);
+  context.lineTo(-2, -20);
+  context.closePath();
+  context.fill();
+  context.beginPath();
+  context.moveTo(5, -17);
+  context.lineTo(9, -25);
+  context.lineTo(2, -20);
+  context.closePath();
+  context.fill();
+
+  context.fillStyle = "#ffd95a";
+  context.beginPath();
+  context.moveTo(-2.5, -23);
+  context.lineTo(0, -38);
+  context.lineTo(2.5, -23);
+  context.closePath();
+  context.fill();
+
+  context.fillStyle = "#523b70";
+  context.beginPath();
+  context.arc(-2.8, -16, 1.3, 0, Math.PI * 2);
+  context.arc(2.8, -16, 1.3, 0, Math.PI * 2);
+  context.fill();
+}
+
+/** 横向きの馬らしさを保ち、左右反転と軽い傾きで進行方向を表現する。 */
 function drawUnicorn(context, game) {
   const player = game.player;
   context.save();
   context.translate(player.x, worldToScreenY(game, player.y));
-  context.rotate(player.angle + Math.PI / 2);
 
-  context.fillStyle = "#fff7ff";
+  const isVertical = Math.abs(Math.cos(player.angle)) < 0.01;
+  if (isVertical) {
+    drawVerticalUnicorn(context, Math.sin(player.angle) > 0);
+    context.restore();
+    return;
+  }
+
+  // 頭を進行方向へ正確に向けつつ、左向きでは絵を反転して逆さを防ぐ。
+  const isFacingLeft = Math.cos(player.angle) < 0;
+  const visualAngle = isFacingLeft
+    ? player.angle - Math.PI
+    : player.angle;
+  context.rotate(visualAngle);
+  context.scale(isFacingLeft ? -1 : 1, 1);
+  context.lineCap = "round";
+
+  drawUnicornTail(context);
+
+  // 前後2組の脚を下へ伸ばし、蹄を濃い色で描く。
+  context.strokeStyle = "#e9dff5";
+  context.lineWidth = 5;
+  for (const legX of [-10, -4, 7, 13]) {
+    context.beginPath();
+    context.moveTo(legX, 6);
+    context.lineTo(legX + (legX < 0 ? -2 : 2), 15);
+    context.stroke();
+  }
+
+  context.strokeStyle = "#8b68a6";
+  context.lineWidth = 2.5;
+  for (const hoofX of [-12, -6, 9, 15]) {
+    context.beginPath();
+    context.moveTo(hoofX, 15);
+    context.lineTo(hoofX + 3, 15);
+    context.stroke();
+  }
+
+  // 横長の胴体と斜めに立ち上がる首を組み合わせる。
+  context.fillStyle = "#fff8ff";
   context.beginPath();
-  context.ellipse(0, 4, 12, 18, 0, 0, Math.PI * 2);
+  context.ellipse(-3, 0, 17, 9, 0, 0, Math.PI * 2);
   context.fill();
   context.beginPath();
-  context.arc(0, -13, 10, 0, Math.PI * 2);
+  context.moveTo(5, 1);
+  context.lineTo(8, -13);
+  context.lineTo(17, -9);
+  context.lineTo(14, 5);
+  context.closePath();
   context.fill();
 
-  context.fillStyle = "#ffe05c";
+  drawUnicornMane(context);
+
+  // 額と突き出した鼻先で馬の横顔を作る。
+  context.fillStyle = "#fff8ff";
   context.beginPath();
-  context.moveTo(0, -31);
-  context.lineTo(-4, -17);
-  context.lineTo(4, -17);
+  context.ellipse(17, -10, 10, 7, -0.15, 0, Math.PI * 2);
+  context.fill();
+  context.beginPath();
+  context.ellipse(25, -7, 7, 4.5, 0.1, 0, Math.PI * 2);
   context.fill();
 
-  context.fillStyle = "#8055ad";
+  // 画面上側へ耳を立てる。
   context.beginPath();
-  context.arc(-4, -14, 1.8, 0, Math.PI * 2);
-  context.arc(4, -14, 1.8, 0, Math.PI * 2);
+  context.moveTo(12, -15);
+  context.lineTo(11, -23);
+  context.lineTo(18, -16);
+  context.closePath();
   context.fill();
+
+  // 額から斜め前方へ金色の角を伸ばす。
+  context.fillStyle = "#ffd95a";
+  context.beginPath();
+  context.moveTo(20, -15);
+  context.lineTo(30, -28);
+  context.lineTo(24, -13);
+  context.closePath();
+  context.fill();
+
+  // 横顔なので目と鼻孔は1つずつ見せる。
+  context.fillStyle = "#523b70";
+  context.beginPath();
+  context.arc(20, -11, 1.7, 0, Math.PI * 2);
+  context.fill();
+  context.beginPath();
+  context.arc(29, -7, 1, 0, Math.PI * 2);
+  context.fill();
+
   context.restore();
 }
 
