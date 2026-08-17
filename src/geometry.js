@@ -24,6 +24,45 @@ export function findLineIntersection(firstStart, firstEnd, secondStart, secondEn
   };
 }
 
+/** 点から線分へ最も近い座標と、その距離を返す。 */
+export function findClosestPointOnSegment(point, segmentStart, segmentEnd) {
+  const segmentX = segmentEnd.x - segmentStart.x;
+  const segmentY = segmentEnd.y - segmentStart.y;
+  const segmentLengthSquared = segmentX ** 2 + segmentY ** 2;
+
+  if (segmentLengthSquared === 0) {
+    return {
+      point: { x: segmentStart.x, y: segmentStart.y },
+      distance: Math.hypot(
+        point.x - segmentStart.x,
+        point.y - segmentStart.y,
+      ),
+    };
+  }
+
+  const position = Math.max(
+    0,
+    Math.min(
+      1,
+      ((point.x - segmentStart.x) * segmentX +
+        (point.y - segmentStart.y) * segmentY) /
+        segmentLengthSquared,
+    ),
+  );
+  const closestPoint = {
+    x: segmentStart.x + segmentX * position,
+    y: segmentStart.y + segmentY * position,
+  };
+
+  return {
+    point: closestPoint,
+    distance: Math.hypot(
+      point.x - closestPoint.x,
+      point.y - closestPoint.y,
+    ),
+  };
+}
+
 /** Ray casting法で点がポリゴンの内側にあるかを判定する。 */
 export function isPointInsidePolygon(point, polygon) {
   let isInside = false;

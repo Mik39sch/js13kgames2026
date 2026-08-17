@@ -3,6 +3,7 @@ import {
   COLLISION_IGNORE_POINTS,
   MINIMUM_LOOP_LENGTH,
   PLAYER_SPEED,
+  RAINBOW_CLOSURE_DISTANCE,
   RAINBOW_DURATION,
   SCREEN_EDGE_PADDING,
   TRAIL_POINT_DISTANCE,
@@ -10,6 +11,7 @@ import {
 } from "./const.js";
 import {
   calculatePolygonArea,
+  findClosestPointOnSegment,
   findLineIntersection,
   isPointInsidePolygon,
 } from "./geometry.js";
@@ -44,9 +46,10 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
     (cloud) => !cloud.isColorful && isPointInsidePolygon(cloud, loop),
   );
 
-  // 雲を囲まずに虹へ触れた場合は、通常の自己衝突として扱う。
+  // 空の輪は得点なしで虹を終了し、ゲームは続行する。
   if (capturedClouds.length === 0) {
-    game.isGameOver = true;
+    game.rainbowTimeRemaining = 0;
+    game.trail = [];
     return;
   }
 
@@ -87,6 +90,29 @@ function checkForTrailIntersection(game, previousPoint, currentPoint) {
       completeLoop(game, intersection, index);
       return true;
     }
+  }
+
+  // 見た目の虹同士が接していれば、中心線に隙間があっても輪として扱う。
+  let closestMatch = null;
+
+  for (let index = 0; index < lastCollisionIndex; index += 1) {
+    const match = findClosestPointOnSegment(
+      currentPoint,
+      game.trail[index],
+      game.trail[index + 1],
+    );
+
+    if (
+      match.distance <= RAINBOW_CLOSURE_DISTANCE &&
+      (!closestMatch || match.distance < closestMatch.distance)
+    ) {
+      closestMatch = { ...match, trailIndex: index };
+    }
+  }
+
+  if (closestMatch) {
+    completeLoop(game, closestMatch.point, closestMatch.trailIndex);
+    return true;
   }
 
   return false;
