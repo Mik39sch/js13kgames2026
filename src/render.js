@@ -66,6 +66,79 @@ function drawCloud(context, game, cloud) {
   context.restore();
 }
 
+/** 上から落下する、色を奪う黒い雫をしずく形で描画する。 */
+function drawInkDrop(context, game, inkDrop) {
+  const screenY = worldToScreenY(game, inkDrop.y);
+  const radius = inkDrop.radius;
+  const pulse = 1 + Math.sin(game.elapsedTime * 6 + inkDrop.phase) * 0.06;
+
+  context.save();
+  context.translate(inkDrop.x, screenY);
+  context.scale(pulse, pulse);
+
+  // 落下方向と速度が分かるよう、上側へ薄い残像を伸ばす。
+  context.strokeStyle = "rgba(56, 31, 82, 0.28)";
+  context.lineWidth = radius * 0.7;
+  context.beginPath();
+  context.moveTo(0, -radius);
+  context.lineTo(0, -radius * 2.8);
+  context.stroke();
+
+  context.fillStyle = "#281a3b";
+  context.strokeStyle = "#9a54ba";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(0, -radius * 1.5);
+  context.bezierCurveTo(
+    radius * 0.35,
+    -radius * 0.7,
+    radius,
+    -radius * 0.15,
+    radius,
+    radius * 0.35,
+  );
+  context.bezierCurveTo(
+    radius,
+    radius,
+    radius * 0.5,
+    radius * 1.25,
+    0,
+    radius * 1.25,
+  );
+  context.bezierCurveTo(
+    -radius * 0.5,
+    radius * 1.25,
+    -radius,
+    radius,
+    -radius,
+    radius * 0.35,
+  );
+  context.bezierCurveTo(
+    -radius,
+    -radius * 0.15,
+    -radius * 0.35,
+    -radius * 0.7,
+    0,
+    -radius * 1.5,
+  );
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = "rgba(255, 255, 255, 0.45)";
+  context.beginPath();
+  context.ellipse(
+    -radius * 0.35,
+    radius * 0.15,
+    radius * 0.18,
+    radius * 0.32,
+    -0.5,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
+  context.restore();
+}
+
 /** 指定した太さと色で軌跡を1本の線として描画する。 */
 function drawTrailLine(context, game, width, color) {
   if (game.trail.length < 2) return;
@@ -363,6 +436,7 @@ export function drawGame(context, game, viewport) {
   drawSky(context, viewport);
   drawStars(context, game, viewport);
   game.clouds.forEach((cloud) => drawCloud(context, game, cloud));
+  game.inkDrops.forEach((inkDrop) => drawInkDrop(context, game, inkDrop));
   drawRainbow(context, game);
   drawUnicorn(context, game);
   drawInterface(context, game, viewport);

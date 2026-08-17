@@ -2,6 +2,12 @@ import {
   CAMERA_PLAYER_POSITION,
   INITIAL_CLOUD_COUNT,
   INITIAL_STAR_COUNT,
+  INK_DROP_MAX_INTERVAL,
+  INK_DROP_MAX_RADIUS,
+  INK_DROP_MAX_SPEED,
+  INK_DROP_MIN_INTERVAL,
+  INK_DROP_MIN_RADIUS,
+  INK_DROP_MIN_SPEED,
   WORLD_GENERATION_DISTANCE,
 } from "./const.js";
 
@@ -17,12 +23,17 @@ export function createGame(viewport) {
     trail: [],
     clouds: [],
     stars: [],
+    inkDrops: [],
     score: 0,
     multiplier: 1,
     rainbowTimeRemaining: 0,
     cameraY: -viewport.height * CAMERA_PLAYER_POSITION,
     nextCloudY: -180,
     nextStarY: -50,
+    nextInkDropIn: randomBetween(
+      INK_DROP_MIN_INTERVAL,
+      INK_DROP_MAX_INTERVAL,
+    ),
     isGameOver: false,
     elapsedTime: 0,
     successFlash: 0,
@@ -63,6 +74,17 @@ export function spawnCloud(game, viewport) {
   });
 }
 
+/** 現在の画面上端より少し上に、落下する黒い雫を1つ生成する。 */
+function spawnInkDrop(game, viewport) {
+  game.inkDrops.push({
+    x: randomBetween(25, viewport.width - 25),
+    y: game.cameraY - 30,
+    radius: randomBetween(INK_DROP_MIN_RADIUS, INK_DROP_MAX_RADIUS),
+    speed: randomBetween(INK_DROP_MIN_SPEED, INK_DROP_MAX_SPEED),
+    phase: randomBetween(0, Math.PI * 2),
+  });
+}
+
 /** スクロール位置に応じてオブジェクトを生成・破棄し、演出を更新する。 */
 export function updateWorld(game, viewport, deltaTime) {
   const generationBoundary =
@@ -71,11 +93,27 @@ export function updateWorld(game, viewport, deltaTime) {
   while (game.nextCloudY > generationBoundary) spawnCloud(game, viewport);
   while (game.nextStarY > generationBoundary) spawnStar(game, viewport);
 
+  game.nextInkDropIn -= deltaTime;
+  if (game.nextInkDropIn <= 0) {
+    spawnInkDrop(game, viewport);
+    game.nextInkDropIn = randomBetween(
+      INK_DROP_MIN_INTERVAL,
+      INK_DROP_MAX_INTERVAL,
+    );
+  }
+
+  for (const inkDrop of game.inkDrops) {
+    inkDrop.y += inkDrop.speed * deltaTime;
+  }
+
   game.clouds = game.clouds.filter(
     (cloud) => cloud.y < game.cameraY + viewport.height + 100,
   );
   game.stars = game.stars.filter(
     (star) => star.y < game.cameraY + viewport.height + 40,
+  );
+  game.inkDrops = game.inkDrops.filter(
+    (inkDrop) => inkDrop.y < game.cameraY + viewport.height + 40,
   );
 
   for (const cloud of game.clouds) {

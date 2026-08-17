@@ -21,3 +21,11 @@ export const MAX_DELTA_TIME = 0.033;
 export const INITIAL_STAR_COUNT = 16;
 export const INITIAL_CLOUD_COUNT = 8;
 export const WORLD_GENERATION_DISTANCE = 1.5;
+
+export const INK_DROP_MIN_INTERVAL = 1.4;
+export const INK_DROP_MAX_INTERVAL = 2.6;
+export const INK_DROP_MIN_SPEED = 65;
+export const INK_DROP_MAX_SPEED = 90;
+export const INK_DROP_MIN_RADIUS = 8;
+export const INK_DROP_MAX_RADIUS = 12;
+export const PLAYER_COLLISION_RADIUS = 12;

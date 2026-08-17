@@ -3,6 +3,7 @@ import {
   COLLISION_IGNORE_POINTS,
   MINIMUM_LOOP_LENGTH,
   PLAYER_SPEED,
+  PLAYER_COLLISION_RADIUS,
   RAINBOW_CLOSURE_DISTANCE,
   RAINBOW_DURATION,
   SCREEN_EDGE_PADDING,
@@ -26,11 +27,20 @@ function updatePlayer(game, input, viewport, deltaTime) {
 
   const cameraTarget = player.y - viewport.height * CAMERA_PLAYER_POSITION;
   const cameraFollowAmount = Math.min(1, deltaTime * 5);
-  game.cameraY += (cameraTarget - game.cameraY) * cameraFollowAmount;
+  const nextCameraY =
+    game.cameraY + (cameraTarget - game.cameraY) * cameraFollowAmount;
+
+  // ワールドの進行方向はY座標が小さくなる方向なので、カメラもその方向にだけ進める。
+  game.cameraY = Math.min(game.cameraY, nextCameraY);
 
   const leftEdge = SCREEN_EDGE_PADDING;
   const rightEdge = viewport.width - SCREEN_EDGE_PADDING;
-  if (player.x < leftEdge || player.x > rightEdge) {
+  const bottomEdge = viewport.height - SCREEN_EDGE_PADDING;
+  const playerScreenY = player.y - game.cameraY;
+  const isOutsideHorizontalEdge = player.x < leftEdge || player.x > rightEdge;
+  const hasHitBottomEdge = playerScreenY > bottomEdge;
+
+  if (isOutsideHorizontalEdge || hasHitBottomEdge) {
     game.isGameOver = true;
   }
 }
@@ -156,6 +166,21 @@ function updateRainbow(game, input, deltaTime) {
   }
 }
 
+/** ユニコーンと黒い雫の円形当たり判定を行う。 */
+function checkInkDropCollision(game) {
+  for (const inkDrop of game.inkDrops) {
+    const distance = Math.hypot(
+      game.player.x - inkDrop.x,
+      game.player.y - inkDrop.y,
+    );
+
+    if (distance < PLAYER_COLLISION_RADIUS + inkDrop.radius) {
+      game.isGameOver = true;
+      return;
+    }
+  }
+}
+
 /** 1フレーム分のゲームロジックを順番に更新する。 */
 export function updateGame(game, input, viewport, deltaTime) {
   game.elapsedTime += deltaTime;
@@ -169,4 +194,5 @@ export function updateGame(game, input, viewport, deltaTime) {
     updateTrail(game);
   }
   updateWorld(game, viewport, deltaTime);
+  checkInkDropCollision(game);
 }
