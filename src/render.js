@@ -420,14 +420,33 @@ function drawGameOver(context, game, viewport) {
   context.textAlign = "center";
   context.fillStyle = "#fff";
   context.font = "800 42px system-ui";
-  context.fillText("RAINBOW BROKEN!", viewport.width / 2, viewport.height * 0.43);
+  context.fillText("RAINBOW BROKEN!", viewport.width / 2, viewport.height * 0.32);
   context.font = "600 20px system-ui";
-  context.fillText(`SCORE  ${game.score}`, viewport.width / 2, viewport.height * 0.5);
+  context.fillText(`SCORE  ${game.score}`, viewport.width / 2, viewport.height * 0.4);
+
+  context.fillStyle = "#ffe76a";
+  context.font = "700 16px system-ui";
+  context.fillText("BEST SCORES", viewport.width / 2, viewport.height * 0.49);
+
+  context.fillStyle = "#fff";
+  context.font = "600 18px system-ui";
+  if (game.highScores.length === 0) {
+    context.fillText("---", viewport.width / 2, viewport.height * 0.55);
+  } else {
+    game.highScores.forEach((score, index) => {
+      context.fillText(
+        `${index + 1}.  ${score}`,
+        viewport.width / 2,
+        viewport.height * 0.55 + index * 27,
+      );
+    });
+  }
+
   context.font = "16px system-ui";
   context.fillText(
     "SPACE / ENTER / 画面タップでリスタート",
     viewport.width / 2,
-    viewport.height * 0.57,
+    viewport.height * 0.75,
   );
   context.textAlign = "left";
 }

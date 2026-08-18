@@ -25,6 +25,8 @@ export function createGame(viewport) {
     stars: [],
     inkDrops: [],
     score: 0,
+    highScores: [],
+    isScoreRecorded: false,
     multiplier: 1,
     rainbowTimeRemaining: 0,
     cameraY: -viewport.height * CAMERA_PLAYER_POSITION,

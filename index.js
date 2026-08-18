@@ -3,6 +3,7 @@ import { createGame } from "./src/world.js";
 import { createInput } from "./src/input.js";
 import { updateGame } from "./src/update.js";
 import { drawGame } from "./src/render.js";
+import { loadHighScores, recordHighScore } from "./src/score.js";
 
 const canvas = document.createElement("canvas");
 const context = canvas.getContext("2d");
@@ -30,6 +31,7 @@ function resizeCanvas() {
 /** 現在の画面サイズを使ってゲームを初期状態に戻す。 */
 function startGame() {
   game = createGame(viewport);
+  game.highScores = loadHighScores();
 }
 
 /** 更新と描画を行い、次のアニメーションフレームを予約する。 */
@@ -45,6 +47,12 @@ function runFrame(currentTime) {
   }
 
   updateGame(game, input, viewport, deltaTime);
+
+  if (game.isGameOver && !game.isScoreRecorded) {
+    game.highScores = recordHighScore(game.score);
+    game.isScoreRecorded = true;
+  }
+
   drawGame(context, game, viewport);
   requestAnimationFrame(runFrame);
 }

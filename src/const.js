@@ -30,3 +30,6 @@ export const INK_DROP_MAX_SPEED = 90;
 export const INK_DROP_MIN_RADIUS = 8;
 export const INK_DROP_MAX_RADIUS = 12;
 export const PLAYER_COLLISION_RADIUS = 12;
+
+export const HIGH_SCORE_STORAGE_KEY = "rainbow-tail-high-scores";
+export const HIGH_SCORE_LIMIT = 3;
