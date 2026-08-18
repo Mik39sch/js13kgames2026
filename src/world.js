@@ -1,5 +1,8 @@
 import {
   CAMERA_PLAYER_POSITION,
+  CANDY_MAX_SPACING,
+  CANDY_MIN_SPACING,
+  CANDY_RADIUS,
   INITIAL_CLOUD_COUNT,
   INITIAL_STAR_COUNT,
   INK_DROP_MAX_INTERVAL,
@@ -30,6 +33,7 @@ export function createGame(viewport) {
     clouds: [],
     stars: [],
     inkDrops: [],
+    candies: [],
     score: 0,
     comboLevel: 0,
     highScores: [],
@@ -43,6 +47,9 @@ export function createGame(viewport) {
       INK_DROP_MIN_INTERVAL,
       INK_DROP_MAX_INTERVAL,
     ),
+    nextCandyY: -400,
+    candyTimeRemaining: 0,
+    candyComboSucceeded: false,
     isGameOver: false,
     elapsedTime: 0,
     successFlash: 0,
@@ -93,6 +100,21 @@ function spawnInkDrop(game, viewport) {
   });
 }
 
+/** プレイヤーより先の空に、速度を下げるキャンディを1つ生成する。 */
+function spawnCandy(game, viewport) {
+  const y = game.nextCandyY - randomBetween(
+    CANDY_MIN_SPACING,
+    CANDY_MAX_SPACING,
+  );
+  game.nextCandyY = y;
+  game.candies.push({
+    x: randomBetween(35, viewport.width - 35),
+    y,
+    radius: CANDY_RADIUS,
+    hue: randomBetween(0, 360),
+  });
+}
+
 /** スクロール位置に応じてオブジェクトを生成・破棄し、演出を更新する。 */
 export function updateWorld(game, viewport, deltaTime) {
   const generationBoundary =
@@ -100,6 +122,7 @@ export function updateWorld(game, viewport, deltaTime) {
 
   while (game.nextCloudY > generationBoundary) spawnCloud(game, viewport);
   while (game.nextStarY > generationBoundary) spawnStar(game, viewport);
+  while (game.nextCandyY > generationBoundary) spawnCandy(game, viewport);
 
   game.nextInkDropIn -= deltaTime;
   if (game.nextInkDropIn <= 0) {
@@ -122,6 +145,9 @@ export function updateWorld(game, viewport, deltaTime) {
   );
   game.inkDrops = game.inkDrops.filter(
     (inkDrop) => inkDrop.y < game.cameraY + viewport.height + 40,
+  );
+  game.candies = game.candies.filter(
+    (candy) => candy.y < game.cameraY + viewport.height + 40,
   );
 
   for (const cloud of game.clouds) {

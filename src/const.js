@@ -10,6 +10,8 @@ export const RAINBOW_COLORS = [
 export const PLAYER_SPEED = 112;
 export const PLAYER_MAX_SPEED = 350;
 export const SCORE_PER_SPEED_INCREASE = 100;
+export const CANDY_SPEED_MULTIPLIER = 0.65;
+export const CANDY_DURATION = 5;
 export const TURN_ANGLE = Math.PI / 6;
 export const RAINBOW_DURATION = 5;
 export const COMBO_RAINBOW_DURATION = 7;
@@ -34,6 +36,10 @@ export const INK_DROP_MAX_SPEED = 90;
 export const INK_DROP_MIN_RADIUS = 8;
 export const INK_DROP_MAX_RADIUS = 12;
 export const PLAYER_COLLISION_RADIUS = 12;
+
+export const CANDY_MIN_SPACING = 650;
+export const CANDY_MAX_SPACING = 1000;
+export const CANDY_RADIUS = 12;
 
 export const HIGH_SCORE_STORAGE_KEY = "rainbow-tail-high-scores";
 export const HIGH_SCORE_LIMIT = 3;

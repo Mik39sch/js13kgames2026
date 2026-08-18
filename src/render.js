@@ -135,6 +135,49 @@ function drawInkDrop(context, game, inkDrop) {
   context.restore();
 }
 
+/** 取得可能な包み紙付きキャンディをパステルカラーで描画する。 */
+function drawCandy(context, game, candy) {
+  const screenY = worldToScreenY(game, candy.y);
+  const radius = candy.radius;
+  const color = `hsl(${candy.hue} 82% 68%)`;
+
+  context.save();
+  context.translate(candy.x, screenY);
+  context.rotate(Math.sin(game.elapsedTime * 2 + candy.y) * 0.18);
+
+  context.fillStyle = color;
+  context.beginPath();
+  context.moveTo(-radius * 0.8, -radius * 0.45);
+  context.lineTo(-radius * 1.55, -radius * 0.85);
+  context.lineTo(-radius * 1.4, radius * 0.75);
+  context.lineTo(-radius * 0.8, radius * 0.45);
+  context.closePath();
+  context.fill();
+  context.beginPath();
+  context.moveTo(radius * 0.8, -radius * 0.45);
+  context.lineTo(radius * 1.55, -radius * 0.85);
+  context.lineTo(radius * 1.4, radius * 0.75);
+  context.lineTo(radius * 0.8, radius * 0.45);
+  context.closePath();
+  context.fill();
+
+  context.fillStyle = "#fff4fb";
+  context.strokeStyle = color;
+  context.lineWidth = 3;
+  context.beginPath();
+  context.arc(0, 0, radius * 0.85, 0, Math.PI * 2);
+  context.fill();
+  context.stroke();
+
+  context.strokeStyle = color;
+  context.lineWidth = 3;
+  context.beginPath();
+  context.moveTo(-radius * 0.45, -radius * 0.55);
+  context.lineTo(radius * 0.45, radius * 0.55);
+  context.stroke();
+  context.restore();
+}
+
 /** 指定した太さと色で軌跡を1本の線として描画する。 */
 function drawTrailLine(context, game, width, color) {
   if (game.trail.length < 2) return;
@@ -373,8 +416,11 @@ function drawInterface(context, game, viewport) {
   context.font = "700 20px system-ui";
   context.fillText(`SCORE  ${game.score}`, 20, 34);
   context.font = "600 13px system-ui";
+  const rainbowStatus = game.candyTimeRemaining > 0
+    ? `CANDY ${game.candyTimeRemaining.toFixed(1)}s`
+    : `RAINBOW ${game.rainbowTimeRemaining.toFixed(1)}s`;
   context.fillText(
-    `RAINBOW  ${game.rainbowTimeRemaining.toFixed(1)}s   SPEED ${Math.round(game.player.speed)}`,
+    `${rainbowStatus}   SPEED ${Math.round(game.player.speed)}`,
     20,
     56,
   );
@@ -400,7 +446,11 @@ function drawInterface(context, game, viewport) {
   context.font = "700 14px system-ui";
   context.textAlign = "center";
   context.fillText(
-    game.comboLevel > 0 ? `COMBO ×${comboMultiplier}` : "RAINBOW",
+    game.candyTimeRemaining > 0
+      ? "CANDY TIME"
+      : game.comboLevel > 0
+        ? `COMBO ×${comboMultiplier}`
+        : "RAINBOW",
     viewport.width / 2,
     buttonY + 27,
   );
@@ -467,6 +517,7 @@ export function drawGame(context, game, viewport) {
   drawSky(context, viewport);
   drawStars(context, game, viewport);
   game.clouds.forEach((cloud) => drawCloud(context, game, cloud));
+  game.candies.forEach((candy) => drawCandy(context, game, candy));
   game.inkDrops.forEach((inkDrop) => drawInkDrop(context, game, inkDrop));
   drawRainbow(context, game);
   drawUnicorn(context, game);

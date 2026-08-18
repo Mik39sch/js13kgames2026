@@ -1,5 +1,7 @@
 import {
   CAMERA_PLAYER_POSITION,
+  CANDY_DURATION,
+  CANDY_SPEED_MULTIPLIER,
   COLLISION_IGNORE_POINTS,
   COMBO_RAINBOW_DURATION,
   MINIMUM_RAINBOW_DURATION,
@@ -30,6 +32,15 @@ function calculatePlayerSpeed(score) {
   );
 }
 
+/** キャンディ効果と最低速度を反映した実際の移動速度を計算する。 */
+function calculateEffectivePlayerSpeed(game) {
+  const normalSpeed = calculatePlayerSpeed(game.score);
+
+  if (game.candyTimeRemaining <= 0) return normalSpeed;
+
+  return Math.max(PLAYER_SPEED, normalSpeed * CANDY_SPEED_MULTIPLIER);
+}
+
 /** 速度が上がっても虹で描ける距離がほぼ一定になる表示時間を計算する。 */
 function calculateRainbowDuration(baseDuration, playerSpeed) {
   return Math.max(
@@ -41,7 +52,7 @@ function calculateRainbowDuration(baseDuration, playerSpeed) {
 /** プレイヤーを入力方向へ旋回させ、自動で前進させる。 */
 function updatePlayer(game, input, viewport, deltaTime) {
   const player = game.player;
-  player.speed = calculatePlayerSpeed(game.score);
+  player.speed = calculateEffectivePlayerSpeed(game);
   player.angle += input.consumeTurnDirection() * TURN_ANGLE;
   player.x += Math.cos(player.angle) * player.speed * deltaTime;
   player.y += Math.sin(player.angle) * player.speed * deltaTime;
@@ -79,6 +90,11 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
 
   // 空の輪は得点なしで虹を終了し、ゲームは続行する。
   if (capturedClouds.length === 0) {
+    if (game.candyTimeRemaining > 0) {
+      game.trail = [{ x: game.player.x, y: game.player.y }];
+      return;
+    }
+
     game.rainbowTimeRemaining = 0;
     game.comboLevel = 0;
     game.trail = [];
@@ -98,14 +114,19 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
   }
 
   game.score += earnedScore;
-  game.player.speed = calculatePlayerSpeed(game.score);
+  game.player.speed = calculateEffectivePlayerSpeed(game);
   game.multiplier = multiplier;
   game.comboLevel += 1;
   game.successFlash = 1;
-  game.rainbowTimeRemaining = calculateRainbowDuration(
-    COMBO_RAINBOW_DURATION,
-    game.player.speed,
-  );
+  if (game.candyTimeRemaining > 0) {
+    game.candyComboSucceeded = true;
+    game.rainbowTimeRemaining = 0;
+  } else {
+    game.rainbowTimeRemaining = calculateRainbowDuration(
+      COMBO_RAINBOW_DURATION,
+      game.player.speed,
+    );
+  }
   game.trail = [{ x: game.player.x, y: game.player.y }];
 }
 
@@ -177,13 +198,44 @@ function updateTrail(game) {
 function updateRainbow(game, input, deltaTime) {
   const activationRequested = input.consumeRainbowActivation();
 
-  if (activationRequested && game.rainbowTimeRemaining <= 0) {
+  if (
+    activationRequested &&
+    game.rainbowTimeRemaining <= 0 &&
+    game.candyTimeRemaining <= 0
+  ) {
     game.rainbowTimeRemaining = calculateRainbowDuration(
       RAINBOW_DURATION,
       game.player.speed,
     );
     game.comboLevel = 0;
     game.trail = [{ x: game.player.x, y: game.player.y }];
+  }
+
+  if (game.candyTimeRemaining > 0) {
+    game.candyTimeRemaining = Math.max(
+      0,
+      game.candyTimeRemaining - deltaTime,
+    );
+
+    if (game.candyTimeRemaining === 0) {
+      game.player.speed = calculatePlayerSpeed(game.score);
+
+      if (game.candyComboSucceeded) {
+        game.rainbowTimeRemaining = calculateRainbowDuration(
+          COMBO_RAINBOW_DURATION,
+          game.player.speed,
+        );
+        game.trail = [{ x: game.player.x, y: game.player.y }];
+      } else {
+        game.rainbowTimeRemaining = 0;
+        game.comboLevel = 0;
+        game.trail = [];
+      }
+
+      game.candyComboSucceeded = false;
+    }
+
+    return;
   }
 
   if (game.rainbowTimeRemaining <= 0) return;
@@ -196,6 +248,28 @@ function updateRainbow(game, input, deltaTime) {
   if (game.rainbowTimeRemaining === 0) {
     game.comboLevel = 0;
     game.trail = [];
+  }
+}
+
+/** ユニコーンとキャンディの接触を判定し、キャンディタイムを開始する。 */
+function checkCandyCollision(game) {
+  const candyIndex = game.candies.findIndex((candy) => {
+    const distance = Math.hypot(
+      game.player.x - candy.x,
+      game.player.y - candy.y,
+    );
+    return distance < PLAYER_COLLISION_RADIUS + candy.radius;
+  });
+
+  if (candyIndex < 0) return;
+
+  game.candies.splice(candyIndex, 1);
+  game.candyTimeRemaining = CANDY_DURATION;
+  game.candyComboSucceeded = game.comboLevel > 0;
+  game.rainbowTimeRemaining = 0;
+
+  if (game.trail.length === 0) {
+    game.trail = [{ x: game.player.x, y: game.player.y }];
   }
 }
 
@@ -223,9 +297,10 @@ export function updateGame(game, input, viewport, deltaTime) {
   updatePlayer(game, input, viewport, deltaTime);
   if (game.isGameOver) return;
 
-  if (game.rainbowTimeRemaining > 0) {
+  if (game.rainbowTimeRemaining > 0 || game.candyTimeRemaining > 0) {
     updateTrail(game);
   }
   updateWorld(game, viewport, deltaTime);
+  checkCandyCollision(game);
   checkInkDropCollision(game);
 }
