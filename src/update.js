@@ -1,6 +1,7 @@
 import {
   CAMERA_PLAYER_POSITION,
   COLLISION_IGNORE_POINTS,
+  COMBO_RAINBOW_DURATION,
   MINIMUM_LOOP_LENGTH,
   PLAYER_SPEED,
   PLAYER_COLLISION_RADIUS,
@@ -59,14 +60,16 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
   // 空の輪は得点なしで虹を終了し、ゲームは続行する。
   if (capturedClouds.length === 0) {
     game.rainbowTimeRemaining = 0;
+    game.comboLevel = 0;
     game.trail = [];
     return;
   }
 
   const loopArea = calculatePolygonArea(loop);
   const multiplier = 1 + Math.min(4, loop.length / 90);
+  const comboMultiplier = 2 ** game.comboLevel;
   const earnedScore = Math.round(
-    capturedClouds.length * Math.sqrt(loopArea) * multiplier,
+    capturedClouds.length * Math.sqrt(loopArea) * multiplier * comboMultiplier,
   );
 
   for (const cloud of capturedClouds) {
@@ -76,9 +79,10 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
 
   game.score += earnedScore;
   game.multiplier = multiplier;
+  game.comboLevel += 1;
   game.successFlash = 1;
-  game.rainbowTimeRemaining = 0;
-  game.trail = [];
+  game.rainbowTimeRemaining = COMBO_RAINBOW_DURATION;
+  game.trail = [{ x: game.player.x, y: game.player.y }];
 }
 
 /** 新しい軌跡の線分が過去の虹と交差したか調べる。 */
@@ -151,6 +155,7 @@ function updateRainbow(game, input, deltaTime) {
 
   if (activationRequested && game.rainbowTimeRemaining <= 0) {
     game.rainbowTimeRemaining = RAINBOW_DURATION;
+    game.comboLevel = 0;
     game.trail = [{ x: game.player.x, y: game.player.y }];
   }
 
@@ -162,6 +167,7 @@ function updateRainbow(game, input, deltaTime) {
   );
 
   if (game.rainbowTimeRemaining === 0) {
+    game.comboLevel = 0;
     game.trail = [];
   }
 }

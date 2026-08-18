@@ -25,6 +25,7 @@ export function createGame(viewport) {
     stars: [],
     inkDrops: [],
     score: 0,
+    comboLevel: 0,
     highScores: [],
     isScoreRecorded: false,
     multiplier: 1,

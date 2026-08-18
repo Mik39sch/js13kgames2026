@@ -374,9 +374,16 @@ function drawInterface(context, game, viewport) {
   context.fillText(`SCORE  ${game.score}`, 20, 34);
   context.font = "600 13px system-ui";
   context.fillText(
-    `RAINBOW  ${game.rainbowTimeRemaining.toFixed(1)}s   ×${game.multiplier.toFixed(1)}`,
+    `RAINBOW  ${game.rainbowTimeRemaining.toFixed(1)}s`,
     20,
     56,
+  );
+  const comboMultiplier = 2 ** game.comboLevel;
+  context.fillStyle = game.comboLevel > 0 ? "#9a3b82" : "rgba(25, 54, 92, 0.78)";
+  context.fillText(
+    `TRAIL ×${game.multiplier.toFixed(1)}   COMBO ×${comboMultiplier}`,
+    20,
+    76,
   );
 
   // キーボードとタッチの両方で認識できる虹発動ボタン。
@@ -392,7 +399,11 @@ function drawInterface(context, game, viewport) {
   context.fillStyle = game.rainbowTimeRemaining > 0 ? "#5b3d82" : "#fff";
   context.font = "700 14px system-ui";
   context.textAlign = "center";
-  context.fillText("RAINBOW", viewport.width / 2, buttonY + 27);
+  context.fillText(
+    game.comboLevel > 0 ? `COMBO ×${comboMultiplier}` : "RAINBOW",
+    viewport.width / 2,
+    buttonY + 27,
+  );
 
   context.fillStyle = "rgba(25, 54, 92, 0.65)";
   context.font = "13px system-ui";
