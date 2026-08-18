@@ -2,12 +2,15 @@ import {
   CAMERA_PLAYER_POSITION,
   COLLISION_IGNORE_POINTS,
   COMBO_RAINBOW_DURATION,
+  MINIMUM_RAINBOW_DURATION,
   MINIMUM_LOOP_LENGTH,
-  PLAYER_SPEED,
   PLAYER_COLLISION_RADIUS,
+  PLAYER_MAX_SPEED,
+  PLAYER_SPEED,
   RAINBOW_CLOSURE_DISTANCE,
   RAINBOW_DURATION,
   SCREEN_EDGE_PADDING,
+  SCORE_PER_SPEED_INCREASE,
   TRAIL_POINT_DISTANCE,
   TURN_ANGLE,
 } from "./const.js";
@@ -19,12 +22,29 @@ import {
 } from "./geometry.js";
 import { updateWorld } from "./world.js";
 
+/** 現在スコアから、上限を考慮したプレイヤー速度を計算する。 */
+function calculatePlayerSpeed(score) {
+  return Math.min(
+    PLAYER_MAX_SPEED,
+    PLAYER_SPEED + score / SCORE_PER_SPEED_INCREASE,
+  );
+}
+
+/** 速度が上がっても虹で描ける距離がほぼ一定になる表示時間を計算する。 */
+function calculateRainbowDuration(baseDuration, playerSpeed) {
+  return Math.max(
+    MINIMUM_RAINBOW_DURATION,
+    baseDuration * PLAYER_SPEED / playerSpeed,
+  );
+}
+
 /** プレイヤーを入力方向へ旋回させ、自動で前進させる。 */
 function updatePlayer(game, input, viewport, deltaTime) {
   const player = game.player;
+  player.speed = calculatePlayerSpeed(game.score);
   player.angle += input.consumeTurnDirection() * TURN_ANGLE;
-  player.x += Math.cos(player.angle) * PLAYER_SPEED * deltaTime;
-  player.y += Math.sin(player.angle) * PLAYER_SPEED * deltaTime;
+  player.x += Math.cos(player.angle) * player.speed * deltaTime;
+  player.y += Math.sin(player.angle) * player.speed * deltaTime;
 
   const cameraTarget = player.y - viewport.height * CAMERA_PLAYER_POSITION;
   const cameraFollowAmount = Math.min(1, deltaTime * 5);
@@ -78,10 +98,14 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
   }
 
   game.score += earnedScore;
+  game.player.speed = calculatePlayerSpeed(game.score);
   game.multiplier = multiplier;
   game.comboLevel += 1;
   game.successFlash = 1;
-  game.rainbowTimeRemaining = COMBO_RAINBOW_DURATION;
+  game.rainbowTimeRemaining = calculateRainbowDuration(
+    COMBO_RAINBOW_DURATION,
+    game.player.speed,
+  );
   game.trail = [{ x: game.player.x, y: game.player.y }];
 }
 
@@ -154,7 +178,10 @@ function updateRainbow(game, input, deltaTime) {
   const activationRequested = input.consumeRainbowActivation();
 
   if (activationRequested && game.rainbowTimeRemaining <= 0) {
-    game.rainbowTimeRemaining = RAINBOW_DURATION;
+    game.rainbowTimeRemaining = calculateRainbowDuration(
+      RAINBOW_DURATION,
+      game.player.speed,
+    );
     game.comboLevel = 0;
     game.trail = [{ x: game.player.x, y: game.player.y }];
   }

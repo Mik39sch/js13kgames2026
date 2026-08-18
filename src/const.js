@@ -8,9 +8,12 @@ export const RAINBOW_COLORS = [
 ];
 
 export const PLAYER_SPEED = 112;
+export const PLAYER_MAX_SPEED = 350;
+export const SCORE_PER_SPEED_INCREASE = 100;
 export const TURN_ANGLE = Math.PI / 6;
 export const RAINBOW_DURATION = 5;
 export const COMBO_RAINBOW_DURATION = 7;
+export const MINIMUM_RAINBOW_DURATION = 2;
 export const RAINBOW_WIDTH = 22;
 export const TRAIL_POINT_DISTANCE = 5;
 export const RAINBOW_CLOSURE_DISTANCE = RAINBOW_WIDTH;

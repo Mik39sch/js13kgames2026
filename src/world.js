@@ -8,6 +8,7 @@ import {
   INK_DROP_MIN_INTERVAL,
   INK_DROP_MIN_RADIUS,
   INK_DROP_MIN_SPEED,
+  PLAYER_SPEED,
   WORLD_GENERATION_DISTANCE,
 } from "./const.js";
 
@@ -19,7 +20,12 @@ function randomBetween(minimum, maximum) {
 /** 新しいゲーム状態を生成し、初期オブジェクトを配置する。 */
 export function createGame(viewport) {
   const game = {
-    player: { x: viewport.width / 2, y: 0, angle: -Math.PI / 2 },
+    player: {
+      x: viewport.width / 2,
+      y: 0,
+      angle: -Math.PI / 2,
+      speed: PLAYER_SPEED,
+    },
     trail: [],
     clouds: [],
     stars: [],

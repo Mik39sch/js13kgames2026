@@ -374,7 +374,7 @@ function drawInterface(context, game, viewport) {
   context.fillText(`SCORE  ${game.score}`, 20, 34);
   context.font = "600 13px system-ui";
   context.fillText(
-    `RAINBOW  ${game.rainbowTimeRemaining.toFixed(1)}s`,
+    `RAINBOW  ${game.rainbowTimeRemaining.toFixed(1)}s   SPEED ${Math.round(game.player.speed)}`,
     20,
     56,
   );
