@@ -1,4 +1,4 @@
-import { RAINBOW_COLORS } from "./const.js";
+import { RAINBOW_COLORS, RAINBOW_WIDTH } from "./const.js";
 
 /** ワールド座標のY値を現在のカメラに対応する画面座標へ変換する。 */
 function worldToScreenY(game, worldY) {
@@ -70,71 +70,67 @@ function drawCloud(context, game, cloud) {
 function drawInkDrop(context, game, inkDrop) {
   const screenY = worldToScreenY(game, inkDrop.y);
   const radius = inkDrop.radius;
-  const pulse = 1 + Math.sin(game.elapsedTime * 6 + inkDrop.phase) * 0.06;
 
   context.save();
   context.translate(inkDrop.x, screenY);
-  context.scale(pulse, pulse);
 
-  // 落下方向と速度が分かるよう、上側へ薄い残像を伸ばす。
-  context.strokeStyle = "rgba(56, 31, 82, 0.28)";
-  context.lineWidth = radius * 0.7;
+  // 細い先端から丸い底へつながる、縦長の液体シルエット。
+  const inkGradient = context.createLinearGradient(
+    -radius,
+    0,
+    radius,
+    0,
+  );
+  inkGradient.addColorStop(0, "#171020");
+  inkGradient.addColorStop(0.65, "#352049");
+  inkGradient.addColorStop(1, "#59406c");
+  context.fillStyle = inkGradient;
   context.beginPath();
-  context.moveTo(0, -radius);
-  context.lineTo(0, -radius * 2.8);
-  context.stroke();
-
-  context.fillStyle = "#281a3b";
-  context.strokeStyle = "#9a54ba";
-  context.lineWidth = 2;
-  context.beginPath();
-  context.moveTo(0, -radius * 1.5);
+  context.moveTo(0, -radius * 2);
   context.bezierCurveTo(
-    radius * 0.35,
-    -radius * 0.7,
-    radius,
-    -radius * 0.15,
-    radius,
+    radius * 0.1,
+    -radius * 1.35,
+    radius * 0.65,
+    -radius * 0.25,
+    radius * 0.65,
     radius * 0.35,
   );
   context.bezierCurveTo(
-    radius,
-    radius,
-    radius * 0.5,
+    radius * 0.65,
+    radius * 0.95,
+    radius * 0.35,
     radius * 1.25,
     0,
     radius * 1.25,
   );
   context.bezierCurveTo(
-    -radius * 0.5,
-    radius * 1.25,
-    -radius,
-    radius,
-    -radius,
-    radius * 0.35,
-  );
-  context.bezierCurveTo(
-    -radius,
-    -radius * 0.15,
     -radius * 0.35,
-    -radius * 0.7,
+    radius * 1.25,
+    -radius * 0.65,
+    radius * 0.95,
+    -radius * 0.65,
+    radius * 0.35,
+  );
+  context.bezierCurveTo(
+    -radius * 0.65,
+    -radius * 0.25,
+    -radius * 0.1,
+    -radius * 1.35,
     0,
-    -radius * 1.5,
+    -radius * 2,
   );
   context.fill();
-  context.stroke();
 
-  context.fillStyle = "rgba(255, 255, 255, 0.45)";
+  // 小さな飛沫を上側に置き、火花や導火線ではなく液体だと示す。
+  context.fillStyle = "rgba(45, 27, 61, 0.72)";
   context.beginPath();
-  context.ellipse(
-    -radius * 0.35,
-    radius * 0.15,
-    radius * 0.18,
-    radius * 0.32,
-    -0.5,
-    0,
-    Math.PI * 2,
-  );
+  context.arc(-radius * 0.35, -radius * 2.45, radius * 0.18, 0, Math.PI * 2);
+  context.arc(radius * 0.3, -radius * 2.9, radius * 0.12, 0, Math.PI * 2);
+  context.fill();
+
+  context.fillStyle = "rgba(255, 255, 255, 0.35)";
+  context.beginPath();
+  context.ellipse(-radius * 0.25, radius * 0.25, radius * 0.1, radius * 0.3, -0.3, 0, Math.PI * 2);
   context.fill();
   context.restore();
 }
@@ -164,7 +160,12 @@ function drawTrailLine(context, game, width, color) {
 /** 同じ軌跡を異なる太さで重ね、6色の虹として描画する。 */
 function drawRainbow(context, game) {
   RAINBOW_COLORS.forEach((color, colorIndex) => {
-    drawTrailLine(context, game, 22 - colorIndex * 3.1, color);
+    drawTrailLine(
+      context,
+      game,
+      RAINBOW_WIDTH - colorIndex * 3.1,
+      color,
+    );
   });
 }
 

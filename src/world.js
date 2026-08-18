@@ -81,7 +81,6 @@ function spawnInkDrop(game, viewport) {
     y: game.cameraY - 30,
     radius: randomBetween(INK_DROP_MIN_RADIUS, INK_DROP_MAX_RADIUS),
     speed: randomBetween(INK_DROP_MIN_SPEED, INK_DROP_MAX_SPEED),
-    phase: randomBetween(0, Math.PI * 2),
   });
 }
 
