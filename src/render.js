@@ -458,7 +458,7 @@ function drawInterface(context, game, viewport) {
   context.fillStyle = "rgba(25, 54, 92, 0.65)";
   context.font = "13px system-ui";
   context.fillText(
-    "← → / A Dで旋回　SPACEで虹を発動",
+    "← → / A D：タップ30°・長押し連続旋回",
     viewport.width / 2,
     viewport.height - 22,
   );

@@ -15,6 +15,7 @@ import {
   SCORE_PER_SPEED_INCREASE,
   TRAIL_POINT_DISTANCE,
   TURN_ANGLE,
+  TURN_SPEED,
 } from "./const.js";
 import {
   calculatePolygonArea,
@@ -53,7 +54,9 @@ function calculateRainbowDuration(baseDuration, playerSpeed) {
 function updatePlayer(game, input, viewport, deltaTime) {
   const player = game.player;
   player.speed = calculateEffectivePlayerSpeed(game);
-  player.angle += input.consumeTurnDirection() * TURN_ANGLE;
+  const tappedTurn = input.consumeTurnDirection() * TURN_ANGLE;
+  const heldTurn = input.getHeldTurnDirection() * TURN_SPEED * deltaTime;
+  player.angle += tappedTurn + heldTurn;
   player.x += Math.cos(player.angle) * player.speed * deltaTime;
   player.y += Math.sin(player.angle) * player.speed * deltaTime;
 
