@@ -55,7 +55,10 @@ function updatePlayer(game, input, viewport, deltaTime) {
   const player = game.player;
   player.speed = calculateEffectivePlayerSpeed(game);
   const tappedTurn = input.consumeTurnDirection() * TURN_ANGLE;
-  const heldTurn = input.getHeldTurnDirection() * TURN_SPEED * deltaTime;
+  // 移動速度と同じ割合で旋回速度も上げ、長押し時の旋回半径を一定に保つ。
+  const speedRatio = player.speed / PLAYER_SPEED;
+  const heldTurn =
+    input.getHeldTurnDirection() * TURN_SPEED * speedRatio * deltaTime;
   player.angle += tappedTurn + heldTurn;
   player.x += Math.cos(player.angle) * player.speed * deltaTime;
   player.y += Math.sin(player.angle) * player.speed * deltaTime;
