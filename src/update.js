@@ -1,7 +1,6 @@
 import {
   CAMERA_PLAYER_POSITION,
-  CANDY_DURATION,
-  CANDY_SPEED_MULTIPLIER,
+  BONUS_STAR_SCORE,
   COLLISION_IGNORE_POINTS,
   COMBO_RAINBOW_DURATION,
   MINIMUM_RAINBOW_DURATION,
@@ -13,6 +12,8 @@ import {
   RAINBOW_DURATION,
   SCREEN_EDGE_PADDING,
   SCORE_PER_SPEED_INCREASE,
+  STAR_TIME_DURATION,
+  STAR_TIME_SPEED_MULTIPLIER,
   TRAIL_POINT_DISTANCE,
   TURN_ANGLE,
   TURN_SPEED,
@@ -33,13 +34,12 @@ function calculatePlayerSpeed(score) {
   );
 }
 
-/** キャンディ効果と最低速度を反映した実際の移動速度を計算する。 */
+/** STAR TIME中だけ速度を65%に下げ、初速112を下限として保つ。 */
 function calculateEffectivePlayerSpeed(game) {
   const normalSpeed = calculatePlayerSpeed(game.score);
 
-  if (game.candyTimeRemaining <= 0) return normalSpeed;
-
-  return Math.max(PLAYER_SPEED, normalSpeed * CANDY_SPEED_MULTIPLIER);
+  if (game.starTimeRemaining <= 0) return normalSpeed;
+  return Math.max(PLAYER_SPEED, normalSpeed * STAR_TIME_SPEED_MULTIPLIER);
 }
 
 /** 速度が上がっても虹で描ける距離がほぼ一定になる表示時間を計算する。 */
@@ -90,10 +90,13 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
   const capturedClouds = game.clouds.filter(
     (cloud) => !cloud.isColorful && isPointInsidePolygon(cloud, loop),
   );
+  const capturedBonusStars = game.bonusStars.filter(
+    (star) => !star.isCollected && isPointInsidePolygon(star, loop),
+  );
 
-  // 空の輪は得点なしで虹を終了し、ゲームは続行する。
-  if (capturedClouds.length === 0) {
-    if (game.candyTimeRemaining > 0) {
+  // 空の輪は得点なし。STAR TIME中だけ、新しい軌跡へ切り替えて継続する。
+  if (capturedClouds.length === 0 && capturedBonusStars.length === 0) {
+    if (game.starTimeRemaining > 0) {
       game.trail = [{ x: game.player.x, y: game.player.y }];
       return;
     }
@@ -107,8 +110,10 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
   const loopArea = calculatePolygonArea(loop);
   const multiplier = 1 + Math.min(4, loop.length / 90);
   const comboMultiplier = 2 ** game.comboLevel;
+  const cloudScore = capturedClouds.length * Math.sqrt(loopArea);
+  const bonusStarScore = capturedBonusStars.length * BONUS_STAR_SCORE;
   const earnedScore = Math.round(
-    capturedClouds.length * Math.sqrt(loopArea) * multiplier * comboMultiplier,
+    (cloudScore + bonusStarScore) * multiplier * comboMultiplier,
   );
 
   for (const cloud of capturedClouds) {
@@ -116,13 +121,22 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
     cloud.burst = 1;
   }
 
+  for (const star of capturedBonusStars) {
+    star.isCollected = true;
+  }
+
   game.score += earnedScore;
-  game.player.speed = calculateEffectivePlayerSpeed(game);
+  game.player.speed = calculatePlayerSpeed(game.score);
   game.multiplier = multiplier;
   game.comboLevel += 1;
   game.successFlash = 1;
-  if (game.candyTimeRemaining > 0) {
-    game.candyComboSucceeded = true;
+  if (capturedBonusStars.length > 0) {
+    game.starTimeRemaining = STAR_TIME_DURATION;
+    game.player.speed = calculateEffectivePlayerSpeed(game);
+    game.starTimeComboSucceeded = true;
+    game.rainbowTimeRemaining = 0;
+  } else if (game.starTimeRemaining > 0) {
+    game.starTimeComboSucceeded = true;
     game.rainbowTimeRemaining = 0;
   } else {
     game.rainbowTimeRemaining = calculateRainbowDuration(
@@ -204,7 +218,7 @@ function updateRainbow(game, input, deltaTime) {
   if (
     activationRequested &&
     game.rainbowTimeRemaining <= 0 &&
-    game.candyTimeRemaining <= 0
+    game.starTimeRemaining <= 0
   ) {
     game.rainbowTimeRemaining = calculateRainbowDuration(
       RAINBOW_DURATION,
@@ -214,16 +228,16 @@ function updateRainbow(game, input, deltaTime) {
     game.trail = [{ x: game.player.x, y: game.player.y }];
   }
 
-  if (game.candyTimeRemaining > 0) {
-    game.candyTimeRemaining = Math.max(
+  if (game.starTimeRemaining > 0) {
+    game.starTimeRemaining = Math.max(
       0,
-      game.candyTimeRemaining - deltaTime,
+      game.starTimeRemaining - deltaTime,
     );
 
-    if (game.candyTimeRemaining === 0) {
+    if (game.starTimeRemaining === 0) {
       game.player.speed = calculatePlayerSpeed(game.score);
 
-      if (game.candyComboSucceeded) {
+      if (game.starTimeComboSucceeded) {
         game.rainbowTimeRemaining = calculateRainbowDuration(
           COMBO_RAINBOW_DURATION,
           game.player.speed,
@@ -235,7 +249,7 @@ function updateRainbow(game, input, deltaTime) {
         game.trail = [];
       }
 
-      game.candyComboSucceeded = false;
+      game.starTimeComboSucceeded = false;
     }
 
     return;
@@ -251,28 +265,6 @@ function updateRainbow(game, input, deltaTime) {
   if (game.rainbowTimeRemaining === 0) {
     game.comboLevel = 0;
     game.trail = [];
-  }
-}
-
-/** ユニコーンとキャンディの接触を判定し、キャンディタイムを開始する。 */
-function checkCandyCollision(game) {
-  const candyIndex = game.candies.findIndex((candy) => {
-    const distance = Math.hypot(
-      game.player.x - candy.x,
-      game.player.y - candy.y,
-    );
-    return distance < PLAYER_COLLISION_RADIUS + candy.radius;
-  });
-
-  if (candyIndex < 0) return;
-
-  game.candies.splice(candyIndex, 1);
-  game.candyTimeRemaining = CANDY_DURATION;
-  game.candyComboSucceeded = game.comboLevel > 0;
-  game.rainbowTimeRemaining = 0;
-
-  if (game.trail.length === 0) {
-    game.trail = [{ x: game.player.x, y: game.player.y }];
   }
 }
 
@@ -300,10 +292,9 @@ export function updateGame(game, input, viewport, deltaTime) {
   updatePlayer(game, input, viewport, deltaTime);
   if (game.isGameOver) return;
 
-  if (game.rainbowTimeRemaining > 0 || game.candyTimeRemaining > 0) {
+  if (game.rainbowTimeRemaining > 0 || game.starTimeRemaining > 0) {
     updateTrail(game);
   }
   updateWorld(game, viewport, deltaTime);
-  checkCandyCollision(game);
   checkInkDropCollision(game);
 }

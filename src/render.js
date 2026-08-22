@@ -1,4 +1,8 @@
-import { RAINBOW_COLORS, RAINBOW_WIDTH } from "./const.js";
+import {
+  BONUS_STAR_SCORE,
+  RAINBOW_COLORS,
+  RAINBOW_WIDTH,
+} from "./const.js";
 
 /** ワールド座標のY値を現在のカメラに対応する画面座標へ変換する。 */
 function worldToScreenY(game, worldY) {
@@ -135,46 +139,41 @@ function drawInkDrop(context, game, inkDrop) {
   context.restore();
 }
 
-/** 取得可能な包み紙付きキャンディをパステルカラーで描画する。 */
-function drawCandy(context, game, candy) {
-  const screenY = worldToScreenY(game, candy.y);
-  const radius = candy.radius;
-  const color = `hsl(${candy.hue} 82% 68%)`;
+/** 高得点であることが伝わる、大きく発光する金色の星を描画する。 */
+function drawBonusStar(context, game, star) {
+  const screenY = worldToScreenY(game, star.y);
+  const pulse = 1 + Math.sin(game.elapsedTime * 4 + star.phase) * 0.1;
 
   context.save();
-  context.translate(candy.x, screenY);
-  context.rotate(Math.sin(game.elapsedTime * 2 + candy.y) * 0.18);
-
-  context.fillStyle = color;
+  context.translate(star.x, screenY);
+  context.rotate(game.elapsedTime * 0.7 + star.phase);
+  context.scale(pulse, pulse);
+  context.shadowColor = "#fff09a";
+  context.shadowBlur = 18;
+  context.fillStyle = "#ffe45c";
+  context.strokeStyle = "#e99736";
+  context.lineWidth = 2.5;
   context.beginPath();
-  context.moveTo(-radius * 0.8, -radius * 0.45);
-  context.lineTo(-radius * 1.55, -radius * 0.85);
-  context.lineTo(-radius * 1.4, radius * 0.75);
-  context.lineTo(-radius * 0.8, radius * 0.45);
+
+  for (let index = 0; index < 10; index += 1) {
+    const radius = index % 2 === 0 ? star.radius : star.radius * 0.45;
+    const angle = -Math.PI / 2 + index * Math.PI / 5;
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    if (index === 0) context.moveTo(x, y);
+    else context.lineTo(x, y);
+  }
+
   context.closePath();
   context.fill();
-  context.beginPath();
-  context.moveTo(radius * 0.8, -radius * 0.45);
-  context.lineTo(radius * 1.55, -radius * 0.85);
-  context.lineTo(radius * 1.4, radius * 0.75);
-  context.lineTo(radius * 0.8, radius * 0.45);
-  context.closePath();
-  context.fill();
-
-  context.fillStyle = "#fff4fb";
-  context.strokeStyle = color;
-  context.lineWidth = 3;
-  context.beginPath();
-  context.arc(0, 0, radius * 0.85, 0, Math.PI * 2);
-  context.fill();
   context.stroke();
+  context.restore();
 
-  context.strokeStyle = color;
-  context.lineWidth = 3;
-  context.beginPath();
-  context.moveTo(-radius * 0.45, -radius * 0.55);
-  context.lineTo(radius * 0.45, radius * 0.55);
-  context.stroke();
+  context.save();
+  context.textAlign = "center";
+  context.font = "700 11px system-ui";
+  context.fillStyle = "#9a5c25";
+  context.fillText(`+${BONUS_STAR_SCORE}`, star.x, screenY + star.radius + 16);
   context.restore();
 }
 
@@ -416,8 +415,8 @@ function drawInterface(context, game, viewport) {
   context.font = "700 20px system-ui";
   context.fillText(`SCORE  ${game.score}`, 20, 34);
   context.font = "600 13px system-ui";
-  const rainbowStatus = game.candyTimeRemaining > 0
-    ? `CANDY ${game.candyTimeRemaining.toFixed(1)}s`
+  const rainbowStatus = game.starTimeRemaining > 0
+    ? `STAR ${game.starTimeRemaining.toFixed(1)}s`
     : `RAINBOW ${game.rainbowTimeRemaining.toFixed(1)}s`;
   context.fillText(
     `${rainbowStatus}   SPEED ${Math.round(game.player.speed)}`,
@@ -446,8 +445,8 @@ function drawInterface(context, game, viewport) {
   context.font = "700 14px system-ui";
   context.textAlign = "center";
   context.fillText(
-    game.candyTimeRemaining > 0
-      ? "CANDY TIME"
+    game.starTimeRemaining > 0
+      ? "STAR TIME"
       : game.comboLevel > 0
         ? `COMBO ×${comboMultiplier}`
         : "RAINBOW",
@@ -517,7 +516,7 @@ export function drawGame(context, game, viewport) {
   drawSky(context, viewport);
   drawStars(context, game, viewport);
   game.clouds.forEach((cloud) => drawCloud(context, game, cloud));
-  game.candies.forEach((candy) => drawCandy(context, game, candy));
+  game.bonusStars.forEach((star) => drawBonusStar(context, game, star));
   game.inkDrops.forEach((inkDrop) => drawInkDrop(context, game, inkDrop));
   drawRainbow(context, game);
   drawUnicorn(context, game);

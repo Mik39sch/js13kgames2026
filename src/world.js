@@ -1,8 +1,8 @@
 import {
   CAMERA_PLAYER_POSITION,
-  CANDY_MAX_SPACING,
-  CANDY_MIN_SPACING,
-  CANDY_RADIUS,
+  BONUS_STAR_MAX_SPACING,
+  BONUS_STAR_MIN_SPACING,
+  BONUS_STAR_RADIUS,
   INITIAL_CLOUD_COUNT,
   INITIAL_STAR_COUNT,
   INK_DROP_MAX_INTERVAL,
@@ -33,7 +33,7 @@ export function createGame(viewport) {
     clouds: [],
     stars: [],
     inkDrops: [],
-    candies: [],
+    bonusStars: [],
     score: 0,
     comboLevel: 0,
     highScores: [],
@@ -47,9 +47,9 @@ export function createGame(viewport) {
       INK_DROP_MIN_INTERVAL,
       INK_DROP_MAX_INTERVAL,
     ),
-    nextCandyY: -400,
-    candyTimeRemaining: 0,
-    candyComboSucceeded: false,
+    nextBonusStarY: -600,
+    starTimeRemaining: 0,
+    starTimeComboSucceeded: false,
     isGameOver: false,
     elapsedTime: 0,
     successFlash: 0,
@@ -100,18 +100,19 @@ function spawnInkDrop(game, viewport) {
   });
 }
 
-/** プレイヤーより先の空に、速度を下げるキャンディを1つ生成する。 */
-function spawnCandy(game, viewport) {
-  const y = game.nextCandyY - randomBetween(
-    CANDY_MIN_SPACING,
-    CANDY_MAX_SPACING,
+/** プレイヤーより先の空に、レアなボーナススターを1つ生成する。 */
+function spawnBonusStar(game, viewport) {
+  const y = game.nextBonusStarY - randomBetween(
+    BONUS_STAR_MIN_SPACING,
+    BONUS_STAR_MAX_SPACING,
   );
-  game.nextCandyY = y;
-  game.candies.push({
+  game.nextBonusStarY = y;
+  game.bonusStars.push({
     x: randomBetween(35, viewport.width - 35),
     y,
-    radius: CANDY_RADIUS,
-    hue: randomBetween(0, 360),
+    radius: BONUS_STAR_RADIUS,
+    phase: randomBetween(0, Math.PI * 2),
+    isCollected: false,
   });
 }
 
@@ -122,7 +123,9 @@ export function updateWorld(game, viewport, deltaTime) {
 
   while (game.nextCloudY > generationBoundary) spawnCloud(game, viewport);
   while (game.nextStarY > generationBoundary) spawnStar(game, viewport);
-  while (game.nextCandyY > generationBoundary) spawnCandy(game, viewport);
+  while (game.nextBonusStarY > generationBoundary) {
+    spawnBonusStar(game, viewport);
+  }
 
   game.nextInkDropIn -= deltaTime;
   if (game.nextInkDropIn <= 0) {
@@ -146,8 +149,9 @@ export function updateWorld(game, viewport, deltaTime) {
   game.inkDrops = game.inkDrops.filter(
     (inkDrop) => inkDrop.y < game.cameraY + viewport.height + 40,
   );
-  game.candies = game.candies.filter(
-    (candy) => candy.y < game.cameraY + viewport.height + 40,
+  game.bonusStars = game.bonusStars.filter(
+    (star) =>
+      !star.isCollected && star.y < game.cameraY + viewport.height + 50,
   );
 
   for (const cloud of game.clouds) {
