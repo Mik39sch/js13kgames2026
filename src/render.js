@@ -1,5 +1,6 @@
 import {
   BONUS_STAR_SCORE,
+  COMBO_EFFECT_DURATION,
   RAINBOW_COLORS,
   RAINBOW_WIDTH,
 } from "./const.js";
@@ -471,6 +472,33 @@ function drawSuccessFlash(context, game, viewport) {
   context.fillRect(0, 0, viewport.width, viewport.height);
 }
 
+/** コンボ成功時の倍率を、上昇しながら短くフェードアウト表示する。 */
+function drawComboEffect(context, game, viewport) {
+  if (game.comboEffectTime <= 0) return;
+
+  const remainingRatio = game.comboEffectTime / COMBO_EFFECT_DURATION;
+  const progress = 1 - remainingRatio;
+  const scale = 0.82 + Math.min(1, progress * 4) * 0.18;
+  const y = viewport.height * 0.42 - progress * 28;
+
+  context.save();
+  context.translate(viewport.width / 2, y);
+  context.scale(scale, scale);
+  context.globalAlpha = Math.min(1, remainingRatio * 1.8);
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.font = "900 52px system-ui";
+  context.lineJoin = "round";
+  context.lineWidth = 7;
+  context.strokeStyle = game.starTimeRemaining > 0 ? "#e99b31" : "#9a55d1";
+  context.shadowColor = "rgba(255, 255, 255, 0.9)";
+  context.shadowBlur = 12;
+  context.strokeText(`×${game.comboEffectMultiplier}`, 0, 0);
+  context.fillStyle = "#fff";
+  context.fillText(`×${game.comboEffectMultiplier}`, 0, 0);
+  context.restore();
+}
+
 /** ゲーム終了時の暗幕、スコア、リスタート案内を描画する。 */
 function drawGameOver(context, game, viewport) {
   if (!game.isGameOver) return;
@@ -522,5 +550,6 @@ export function drawGame(context, game, viewport) {
   drawUnicorn(context, game);
   drawInterface(context, game, viewport);
   drawSuccessFlash(context, game, viewport);
+  drawComboEffect(context, game, viewport);
   drawGameOver(context, game, viewport);
 }

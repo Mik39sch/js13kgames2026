@@ -2,6 +2,7 @@ import {
   CAMERA_PLAYER_POSITION,
   BONUS_STAR_SCORE,
   COLLISION_IGNORE_POINTS,
+  COMBO_EFFECT_DURATION,
   COMBO_RAINBOW_DURATION,
   MINIMUM_RAINBOW_DURATION,
   MINIMUM_LOOP_LENGTH,
@@ -133,6 +134,10 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
   game.multiplier = multiplier;
   game.comboLevel += 1;
   game.successFlash = 1;
+  if (comboMultiplier > 1) {
+    game.comboEffectTime = COMBO_EFFECT_DURATION;
+    game.comboEffectMultiplier = comboMultiplier;
+  }
   if (capturedBonusStars.length > 0) {
     game.starTimeRemaining = STAR_TIME_DURATION;
     game.player.speed = calculateEffectivePlayerSpeed(game);

@@ -53,6 +53,8 @@ export function createGame(viewport) {
     isGameOver: false,
     elapsedTime: 0,
     successFlash: 0,
+    comboEffectTime: 0,
+    comboEffectMultiplier: 1,
   };
 
   for (let index = 0; index < INITIAL_STAR_COUNT; index += 1) {
@@ -158,4 +160,5 @@ export function updateWorld(game, viewport, deltaTime) {
     cloud.burst = Math.max(0, cloud.burst - deltaTime * 2);
   }
   game.successFlash = Math.max(0, game.successFlash - deltaTime * 2.5);
+  game.comboEffectTime = Math.max(0, game.comboEffectTime - deltaTime);
 }
