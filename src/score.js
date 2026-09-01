@@ -1,5 +1,20 @@
 import { HIGH_SCORE_LIMIT, HIGH_SCORE_STORAGE_KEY } from "./const.js";
 
+/** コンボレベルを1, 2, 3, 5, 8...のフィボナッチ倍率へ変換する。 */
+export function calculateComboMultiplier(comboLevel) {
+  let multiplier = 1;
+  let nextMultiplier = 2;
+
+  for (let level = 0; level < comboLevel; level += 1) {
+    [multiplier, nextMultiplier] = [
+      nextMultiplier,
+      multiplier + nextMultiplier,
+    ];
+  }
+
+  return multiplier;
+}
+
 /** localStorageから有効なスコアだけを読み込み、降順で返す。 */
 export function loadHighScores() {
   try {

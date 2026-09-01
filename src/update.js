@@ -26,6 +26,7 @@ import {
   isPointInsidePolygon,
 } from "./geometry.js";
 import { updateWorld } from "./world.js";
+import { calculateComboMultiplier } from "./score.js";
 
 /** 現在スコアから、上限を考慮したプレイヤー速度を計算する。 */
 function calculatePlayerSpeed(score) {
@@ -113,7 +114,7 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
 
   const loopArea = calculatePolygonArea(loop);
   const multiplier = 1 + Math.min(4, loop.length / 90);
-  const comboMultiplier = 2 ** game.comboLevel;
+  const comboMultiplier = calculateComboMultiplier(game.comboLevel);
   const cloudScore = capturedClouds.length * Math.sqrt(loopArea);
   const bonusStarScore = capturedBonusStars.length * BONUS_STAR_SCORE;
   const earnedScore = Math.round(

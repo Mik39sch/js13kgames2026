@@ -4,6 +4,7 @@ import {
   RAINBOW_COLORS,
   RAINBOW_WIDTH,
 } from "./const.js";
+import { calculateComboMultiplier } from "./score.js";
 
 /** ワールド座標のY値を現在のカメラに対応する画面座標へ変換する。 */
 function worldToScreenY(game, worldY) {
@@ -424,7 +425,7 @@ function drawInterface(context, game, viewport) {
     20,
     56,
   );
-  const comboMultiplier = 2 ** game.comboLevel;
+  const comboMultiplier = calculateComboMultiplier(game.comboLevel);
   context.fillStyle = game.comboLevel > 0 ? "#9a3b82" : "rgba(25, 54, 92, 0.78)";
   context.fillText(
     `TRAIL ×${game.multiplier.toFixed(1)}   COMBO ×${comboMultiplier}`,
