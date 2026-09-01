@@ -6,7 +6,7 @@ import {
   TITLE_STORY_LINE_GAP,
 } from "./const.js";
 import { calculateComboMultiplier } from "./score.js";
-import { TITLE_STORY_LINES } from "./title.js";
+import { TITLE_STORIES } from "./title.js";
 
 /** ワールド座標のY値を現在のカメラに対応する画面座標へ変換する。 */
 function worldToScreenY(game, worldY) {
@@ -575,7 +575,7 @@ function drawTitleStory(context, title, viewport) {
   context.textAlign = "center";
   context.textBaseline = "middle";
 
-  TITLE_STORY_LINES.forEach((line, index) => {
+  TITLE_STORIES[title.language].forEach((line, index) => {
     const y =
       viewport.height * 0.82 +
       index * TITLE_STORY_LINE_GAP -
@@ -583,10 +583,11 @@ function drawTitleStory(context, title, viewport) {
     if (!line || y < 25 || y > viewport.height - 35) return;
 
     const depth = Math.max(0, Math.min(1, y / viewport.height));
-    const fontSize = Math.min(
-      14 + depth * 7,
-      (viewport.width - 32) / Math.max(1, line.length),
-    );
+    const baseFontSize = 14 + depth * 7;
+    context.font = `700 ${baseFontSize}px system-ui`;
+    const fontSize =
+      baseFontSize *
+      Math.min(1, (viewport.width - 32) / context.measureText(line).width);
     context.globalAlpha = Math.min(1, (y - 20) / 85);
     context.fillStyle = "#342c57";
     context.font = `700 ${fontSize}px system-ui`;
@@ -597,7 +598,9 @@ function drawTitleStory(context, title, viewport) {
   context.fillStyle = "#554775";
   context.font = "13px system-ui";
   context.fillText(
-    "SPACE / ENTER / TAP TO SKIP",
+    title.language === "en"
+      ? "SPACE / ENTER / TAP TO SKIP"
+      : "SPACE / ENTER / タップでスキップ",
     viewport.width / 2,
     viewport.height - 22,
   );
@@ -605,7 +608,7 @@ function drawTitleStory(context, title, viewport) {
 }
 
 /** タイトルロゴ、物語から分離した操作説明、開始案内を描画する。 */
-function drawTitleMenu(context, viewport) {
+function drawTitleMenu(context, title, viewport) {
   context.save();
   context.textAlign = "center";
   context.fillStyle = "#533779";
@@ -613,24 +616,41 @@ function drawTitleMenu(context, viewport) {
   context.fillText("RAINBOW TAIL", viewport.width / 2, viewport.height * 0.25);
 
   context.fillStyle = "rgba(63, 48, 91, 0.9)";
-  const description = "虹で雲や星を囲って、世界に色を取り戻しましょう";
-  const descriptionSize = Math.min(
-    17,
-    (viewport.width - 28) / description.length,
+  const descriptionLines = title.language === "en"
+    ? [
+        "Circle clouds and stars with rainbows,",
+        "and bring color back to the world.",
+      ]
+    : ["虹で雲や星を囲って、世界に色を取り戻しましょう"];
+  const baseDescriptionSize = title.language === "en" ? 16 : 17;
+  context.font = `700 ${baseDescriptionSize}px system-ui`;
+  const descriptionWidth = Math.max(
+    ...descriptionLines.map((line) => context.measureText(line).width),
   );
+  const descriptionSize =
+    baseDescriptionSize *
+    Math.min(1, (viewport.width - 28) / descriptionWidth);
   context.font = `700 ${descriptionSize}px system-ui`;
-  context.fillText(
-    description,
-    viewport.width / 2,
-    viewport.height * 0.34,
-  );
+  descriptionLines.forEach((line, index) => {
+    context.fillText(
+      line,
+      viewport.width / 2,
+      viewport.height * 0.34 + index * 21,
+    );
+  });
 
   context.font = "15px system-ui";
-  const instructions = [
-    "← → / A D / 画面左右：旋回",
-    "長押し：連続旋回",
-    "SPACE / RAINBOW：虹を描く",
-  ];
+  const instructions = title.language === "en"
+    ? [
+        "← → / A D / SCREEN SIDES: TURN",
+        "HOLD: CONTINUOUS TURN",
+        "SPACE / RAINBOW: DRAW A RAINBOW",
+      ]
+    : [
+        "← → / A D / 画面左右：旋回",
+        "長押し：連続旋回",
+        "SPACE / RAINBOW：虹を描く",
+      ];
   instructions.forEach((line, index) => {
     context.fillText(line, viewport.width / 2, viewport.height * 0.47 + index * 30);
   });
@@ -647,9 +667,29 @@ function drawTitleMenu(context, viewport) {
   context.restore();
 }
 
+/** 現在と反対の言語へ切り替えるボタンを右上に描画する。 */
+function drawLanguageButton(context, title, viewport) {
+  context.save();
+  context.fillStyle = "rgba(83, 55, 121, 0.72)";
+  context.fillRect(viewport.width - 94, 14, 80, 34);
+  context.strokeStyle = "rgba(255, 255, 255, 0.85)";
+  context.lineWidth = 1.5;
+  context.strokeRect(viewport.width - 94, 14, 80, 34);
+  context.fillStyle = "#fff";
+  context.textAlign = "center";
+  context.font = "700 13px system-ui";
+  context.fillText(
+    title.language === "en" ? "日本語" : "ENGLISH",
+    viewport.width - 54,
+    36,
+  );
+  context.restore();
+}
+
 /** プロローグまたは操作説明を、動くゲーム背景の上へ描画する。 */
 export function drawTitle(context, title, viewport) {
   drawTitleBackground(context, title.background, viewport);
   if (title.phase === "story") drawTitleStory(context, title, viewport);
-  else drawTitleMenu(context, viewport);
+  else drawTitleMenu(context, title, viewport);
+  drawLanguageButton(context, title, viewport);
 }

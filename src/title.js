@@ -7,31 +7,58 @@ import {
 } from "./const.js";
 import { createGame, updateWorld } from "./world.js";
 
-export const TITLE_STORY_LINES = [
-  "むかし、色にあふれた世界が広がっていた。",
-  "",
-  "緑の木々はささやき、",
-  "青い空がどこまでも広がり、",
-  "鳥たちは楽しそうに歌っていた。",
-  "",
-  "しかし、ある日。",
-  "黒い雨が降り始めた。",
-  "",
-  "黒い雨は、触れたものから色を奪い、",
-  "少しずつ世界を暗くしていった。",
-  "",
-  "木々はささやくのをやめ、",
-  "鳥たちの歌も聞こえなくなった。",
-  "",
-  "世界は、暗く悲しい場所になってしまった。",
-  "",
-  "そんなとき、",
-  "灰色の雲の向こうで、",
-  "小さな角が輝いた。",
-  "",
-  "虹で失われた色を取り戻すため、",
-  "ユニコーンは空へ飛び立った。",
-];
+export const TITLE_STORIES = {
+  en: [
+    "Long ago, the world was filled with color.",
+    "",
+    "The green trees whispered,",
+    "the blue sky stretched endlessly,",
+    "and birds sang happily.",
+    "",
+    "But one day,",
+    "black rain began to fall.",
+    "",
+    "The black rain stole color from everything it touched,",
+    "slowly darkening the world.",
+    "",
+    "The trees fell silent,",
+    "and the birds' songs could no longer be heard.",
+    "",
+    "The world had become a dark and sorrowful place.",
+    "",
+    "Then,",
+    "beyond the gray clouds,",
+    "a tiny horn began to shine.",
+    "",
+    "To bring back the colors that had been lost,",
+    "a unicorn took flight into the sky.",
+  ],
+  ja: [
+    "むかし、色にあふれた世界が広がっていた。",
+    "",
+    "緑の木々はささやき、",
+    "青い空がどこまでも広がり、",
+    "鳥たちは楽しそうに歌っていた。",
+    "",
+    "しかし、ある日。",
+    "黒い雨が降り始めた。",
+    "",
+    "黒い雨は、触れたものから色を奪い、",
+    "少しずつ世界を暗くしていった。",
+    "",
+    "木々はささやくのをやめ、",
+    "鳥たちの歌も聞こえなくなった。",
+    "",
+    "世界は、暗く悲しい場所になってしまった。",
+    "",
+    "そんなとき、",
+    "灰色の雲の向こうで、",
+    "小さな角が輝いた。",
+    "",
+    "虹で失われた色を取り戻すため、",
+    "ユニコーンは空へ飛び立った。",
+  ],
+};
 
 /** 動く空を持つプロローグ画面の状態を生成する。 */
 export function createTitle(viewport) {
@@ -43,7 +70,14 @@ export function createTitle(viewport) {
     background,
     phase: "story",
     storyOffset: 0,
+    language: "en",
   };
+}
+
+/** 英語と日本語を切り替え、物語の途中なら冒頭へ戻す。 */
+export function toggleTitleLanguage(title) {
+  title.language = title.language === "en" ? "ja" : "en";
+  if (title.phase === "story") title.storyOffset = 0;
 }
 
 /** プロローグを終了し、タイトルと操作説明を表示する。 */
@@ -85,7 +119,7 @@ export function updateTitle(title, viewport, deltaTime) {
     title.storyOffset += TITLE_STORY_SCROLL_SPEED * deltaTime;
     const storyEnd =
       viewport.height * 0.82 +
-      TITLE_STORY_LINES.length * TITLE_STORY_LINE_GAP +
+      TITLE_STORIES[title.language].length * TITLE_STORY_LINE_GAP +
       80;
     if (title.storyOffset >= storyEnd) title.phase = "menu";
   }

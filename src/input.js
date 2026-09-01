@@ -10,6 +10,13 @@ export function createInput() {
   const heldPointerTurns = new Map();
   let restartRequested = false;
   let rainbowRequested = false;
+  let languageToggleRequested = false;
+  let titleActive = false;
+
+  /** タイトル画面右上の言語切り替えボタン内か判定する。 */
+  function isLanguageButton(event) {
+    return event.clientX >= innerWidth - 94 && event.clientY <= 58;
+  }
 
   /** ポインターが画面下部のRAINBOWボタン内にあるか判定する。 */
   function isRainbowButton(event) {
@@ -27,6 +34,11 @@ export function createInput() {
 
   /** タッチまたはクリックした画面側への旋回を1回予約する。 */
   function handlePointerDown(event) {
+    if (titleActive && isLanguageButton(event)) {
+      languageToggleRequested = true;
+      return;
+    }
+
     restartRequested = true;
 
     if (isRainbowButton(event)) {
@@ -54,6 +66,11 @@ export function createInput() {
   }
 
   addEventListener("keydown", (event) => {
+    if (titleActive && !event.repeat && ["l", "L"].includes(event.key)) {
+      languageToggleRequested = true;
+      return;
+    }
+
     if (["ArrowLeft", "ArrowRight", " "].includes(event.key)) {
       event.preventDefault();
     }
@@ -129,12 +146,25 @@ export function createInput() {
       return requested;
     },
 
+    /** タイトル画面の言語切り替え要求を返し、その入力を消費する。 */
+    consumeLanguageToggle() {
+      const requested = languageToggleRequested;
+      languageToggleRequested = false;
+      return requested;
+    },
+
+    /** 言語ボタンがゲーム操作を妨げないよう、タイトル表示状態を設定する。 */
+    setTitleActive(active) {
+      titleActive = active;
+    },
+
     /** リスタート前などに、まだ処理していない旋回入力を破棄する。 */
     clearPendingTurns() {
       pendingTurns.length = 0;
       heldKeyboardTurns.clear();
       heldPointerTurns.clear();
       rainbowRequested = false;
+      languageToggleRequested = false;
     },
   };
 }

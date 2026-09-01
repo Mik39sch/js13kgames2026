@@ -7,6 +7,7 @@ import { loadHighScores, recordHighScore } from "./src/score.js";
 import {
   createTitle,
   skipTitleStory,
+  toggleTitleLanguage,
   updateTitle,
 } from "./src/title.js";
 import { drawTitle } from "./src/render.js";
@@ -53,12 +54,17 @@ function runFrame(currentTime) {
   const restartRequested = input.consumeRestart();
 
   if (title) {
+    if (input.consumeLanguageToggle()) {
+      toggleTitleLanguage(title);
+    }
+
     if (restartRequested) {
       if (title.phase === "story") {
         skipTitleStory(title);
       } else {
         startGame();
         title = null;
+        input.setTitleActive(false);
       }
       input.clearPendingTurns();
     }
@@ -90,4 +96,5 @@ function runFrame(currentTime) {
 addEventListener("resize", resizeCanvas);
 resizeCanvas();
 title = createTitle(viewport);
+input.setTitleActive(true);
 requestAnimationFrame(runFrame);
