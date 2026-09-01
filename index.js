@@ -4,6 +4,12 @@ import { createInput } from "./src/input.js";
 import { updateGame } from "./src/update.js";
 import { drawGame } from "./src/render.js";
 import { loadHighScores, recordHighScore } from "./src/score.js";
+import {
+  createTitle,
+  skipTitleStory,
+  updateTitle,
+} from "./src/title.js";
+import { drawTitle } from "./src/render.js";
 
 const canvas = document.createElement("canvas");
 const context = canvas.getContext("2d");
@@ -12,6 +18,7 @@ document.body.append(canvas);
 const input = createInput();
 const viewport = { width: 0, height: 0 };
 let game;
+let title;
 let previousFrameTime = performance.now();
 
 /** Canvasを画面サイズに合わせ、高DPI環境でも鮮明に描画できるようにする。 */
@@ -25,6 +32,9 @@ function resizeCanvas() {
 
   if (game) {
     game.player.x = Math.max(30, Math.min(viewport.width - 30, game.player.x));
+  }
+  if (title) {
+    title.background.player.x = viewport.width / 2;
   }
 }
 
@@ -41,6 +51,26 @@ function runFrame(currentTime) {
   previousFrameTime = currentTime;
 
   const restartRequested = input.consumeRestart();
+
+  if (title) {
+    if (restartRequested) {
+      if (title.phase === "story") {
+        skipTitleStory(title);
+      } else {
+        startGame();
+        title = null;
+      }
+      input.clearPendingTurns();
+    }
+
+    if (title) {
+      updateTitle(title, viewport, deltaTime);
+      drawTitle(context, title, viewport);
+      requestAnimationFrame(runFrame);
+      return;
+    }
+  }
+
   if (game.isGameOver && restartRequested) {
     startGame();
     input.clearPendingTurns();
@@ -59,5 +89,5 @@ function runFrame(currentTime) {
 
 addEventListener("resize", resizeCanvas);
 resizeCanvas();
-startGame();
+title = createTitle(viewport);
 requestAnimationFrame(runFrame);

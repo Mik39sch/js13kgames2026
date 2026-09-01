@@ -3,8 +3,10 @@ import {
   COMBO_EFFECT_DURATION,
   RAINBOW_COLORS,
   RAINBOW_WIDTH,
+  TITLE_STORY_LINE_GAP,
 } from "./const.js";
 import { calculateComboMultiplier } from "./score.js";
+import { TITLE_STORY_LINES } from "./title.js";
 
 /** ワールド座標のY値を現在のカメラに対応する画面座標へ変換する。 */
 function worldToScreenY(game, worldY) {
@@ -553,4 +555,101 @@ export function drawGame(context, game, viewport) {
   drawSuccessFlash(context, game, viewport);
   drawComboEffect(context, game, viewport);
   drawGameOver(context, game, viewport);
+}
+
+/** タイトル背景として、UIと危険物を除いたゲーム世界を描画する。 */
+function drawTitleBackground(context, game, viewport) {
+  drawSky(context, viewport);
+  drawStars(context, game, viewport);
+  game.clouds.forEach((cloud) => drawCloud(context, game, cloud));
+  game.bonusStars.forEach((star) => drawBonusStar(context, game, star));
+  drawRainbow(context, game);
+  drawUnicorn(context, game);
+  context.fillStyle = "rgba(247, 241, 255, 0.62)";
+  context.fillRect(0, 0, viewport.width, viewport.height);
+}
+
+/** 奥へ流れていく物語を、上端ほど小さく薄く描画する。 */
+function drawTitleStory(context, title, viewport) {
+  context.save();
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+
+  TITLE_STORY_LINES.forEach((line, index) => {
+    const y =
+      viewport.height * 0.82 +
+      index * TITLE_STORY_LINE_GAP -
+      title.storyOffset;
+    if (!line || y < 25 || y > viewport.height - 35) return;
+
+    const depth = Math.max(0, Math.min(1, y / viewport.height));
+    const fontSize = Math.min(
+      14 + depth * 7,
+      (viewport.width - 32) / Math.max(1, line.length),
+    );
+    context.globalAlpha = Math.min(1, (y - 20) / 85);
+    context.fillStyle = "#342c57";
+    context.font = `700 ${fontSize}px system-ui`;
+    context.fillText(line, viewport.width / 2, y);
+  });
+
+  context.globalAlpha = 0.65;
+  context.fillStyle = "#554775";
+  context.font = "13px system-ui";
+  context.fillText(
+    "SPACE / ENTER / TAP TO SKIP",
+    viewport.width / 2,
+    viewport.height - 22,
+  );
+  context.restore();
+}
+
+/** タイトルロゴ、物語から分離した操作説明、開始案内を描画する。 */
+function drawTitleMenu(context, viewport) {
+  context.save();
+  context.textAlign = "center";
+  context.fillStyle = "#533779";
+  context.font = `900 ${Math.min(54, viewport.width * 0.12)}px system-ui`;
+  context.fillText("RAINBOW TAIL", viewport.width / 2, viewport.height * 0.25);
+
+  context.fillStyle = "rgba(63, 48, 91, 0.9)";
+  const description = "虹で雲や星を囲って、世界に色を取り戻しましょう";
+  const descriptionSize = Math.min(
+    17,
+    (viewport.width - 28) / description.length,
+  );
+  context.font = `700 ${descriptionSize}px system-ui`;
+  context.fillText(
+    description,
+    viewport.width / 2,
+    viewport.height * 0.34,
+  );
+
+  context.font = "15px system-ui";
+  const instructions = [
+    "← → / A D / 画面左右：旋回",
+    "長押し：連続旋回",
+    "SPACE / RAINBOW：虹を描く",
+  ];
+  instructions.forEach((line, index) => {
+    context.fillText(line, viewport.width / 2, viewport.height * 0.47 + index * 30);
+  });
+
+  const pulse = 0.65 + Math.sin(performance.now() / 350) * 0.25;
+  context.globalAlpha = pulse;
+  context.fillStyle = "#6d3d91";
+  context.font = "800 17px system-ui";
+  context.fillText(
+    "SPACE / ENTER / TAP TO START",
+    viewport.width / 2,
+    viewport.height * 0.78,
+  );
+  context.restore();
+}
+
+/** プロローグまたは操作説明を、動くゲーム背景の上へ描画する。 */
+export function drawTitle(context, title, viewport) {
+  drawTitleBackground(context, title.background, viewport);
+  if (title.phase === "story") drawTitleStory(context, title, viewport);
+  else drawTitleMenu(context, viewport);
 }

@@ -119,7 +119,7 @@ function spawnBonusStar(game, viewport) {
 }
 
 /** スクロール位置に応じてオブジェクトを生成・破棄し、演出を更新する。 */
-export function updateWorld(game, viewport, deltaTime) {
+export function updateWorld(game, viewport, deltaTime, hazardsEnabled = true) {
   const generationBoundary =
     game.cameraY - viewport.height * WORLD_GENERATION_DISTANCE;
 
@@ -130,7 +130,7 @@ export function updateWorld(game, viewport, deltaTime) {
   }
 
   game.nextInkDropIn -= deltaTime;
-  if (game.nextInkDropIn <= 0) {
+  if (hazardsEnabled && game.nextInkDropIn <= 0) {
     spawnInkDrop(game, viewport);
     game.nextInkDropIn = randomBetween(
       INK_DROP_MIN_INTERVAL,

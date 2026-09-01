@@ -25,6 +25,8 @@ export const COLLISION_IGNORE_POINTS = 12;
 export const SCREEN_EDGE_PADDING = 12;
 export const CAMERA_PLAYER_POSITION = 0.66;
 export const MAX_DELTA_TIME = 0.033;
+export const TITLE_STORY_SCROLL_SPEED = 40;
+export const TITLE_STORY_LINE_GAP = 32;
 
 export const INITIAL_STAR_COUNT = 16;
 export const INITIAL_CLOUD_COUNT = 8;
