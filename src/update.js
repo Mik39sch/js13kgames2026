@@ -52,6 +52,18 @@ function calculateRainbowDuration(baseDuration, playerSpeed) {
   );
 }
 
+/** 同じフレームで再生する効果音をキューへ追加する。 */
+function queueSound(game, type, properties = {}) {
+  game.soundEvents.push({ type, ...properties });
+}
+
+/** ゲームオーバーを一度だけ設定し、対応する効果音を予約する。 */
+function endGame(game) {
+  if (game.isGameOver) return;
+  game.isGameOver = true;
+  queueSound(game, "gameOver");
+}
+
 /** プレイヤーを入力方向へ旋回させ、自動で前進させる。 */
 function updatePlayer(game, input, viewport, deltaTime) {
   const player = game.player;
@@ -81,7 +93,7 @@ function updatePlayer(game, input, viewport, deltaTime) {
   const hasHitBottomEdge = playerScreenY > bottomEdge;
 
   if (isOutsideHorizontalEdge || hasHitBottomEdge) {
-    game.isGameOver = true;
+    endGame(game);
   }
 }
 
@@ -109,6 +121,7 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
     game.rainbowTimeRemaining = 0;
     game.comboLevel = 0;
     game.trail = [];
+    queueSound(game, "rainbowEnd");
     return;
   }
 
@@ -135,6 +148,11 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
   game.multiplier = multiplier;
   game.comboLevel += 1;
   game.successFlash = 1;
+  queueSound(
+    game,
+    capturedBonusStars.length > 0 ? "star" : "capture",
+    { multiplier: comboMultiplier },
+  );
   if (comboMultiplier > 1) {
     game.comboEffectTime = COMBO_EFFECT_DURATION;
     game.comboEffectMultiplier = comboMultiplier;
@@ -235,6 +253,7 @@ function updateRainbow(game, input, deltaTime) {
     );
     game.comboLevel = 0;
     game.trail = [{ x: game.player.x, y: game.player.y }];
+    queueSound(game, "rainbowStart");
   }
 
   if (game.starTimeRemaining > 0) {
@@ -274,6 +293,7 @@ function updateRainbow(game, input, deltaTime) {
   if (game.rainbowTimeRemaining === 0) {
     game.comboLevel = 0;
     game.trail = [];
+    queueSound(game, "rainbowEnd");
   }
 }
 
@@ -286,7 +306,7 @@ function checkInkDropCollision(game) {
     );
 
     if (distance < PLAYER_COLLISION_RADIUS + inkDrop.radius) {
-      game.isGameOver = true;
+      endGame(game);
       return;
     }
   }

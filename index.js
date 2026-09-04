@@ -4,6 +4,7 @@ import { createInput } from "./src/input.js";
 import { updateGame } from "./src/update.js";
 import { drawGame } from "./src/render.js";
 import { loadHighScores, recordHighScore } from "./src/score.js";
+import { createAudio } from "./src/audio.js";
 import {
   createTitle,
   skipTitleStory,
@@ -17,6 +18,7 @@ const context = canvas.getContext("2d");
 document.body.append(canvas);
 
 const input = createInput();
+const audio = createAudio();
 const viewport = { width: 0, height: 0 };
 let game;
 let title;
@@ -83,6 +85,7 @@ function runFrame(currentTime) {
   }
 
   updateGame(game, input, viewport, deltaTime);
+  audio.playEvents(game.soundEvents);
 
   if (game.isGameOver && !game.isScoreRecorded) {
     game.highScores = recordHighScore(game.score);

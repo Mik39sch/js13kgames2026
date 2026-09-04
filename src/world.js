@@ -55,6 +55,7 @@ export function createGame(viewport) {
     successFlash: 0,
     comboEffectTime: 0,
     comboEffectMultiplier: 1,
+    soundEvents: [],
   };
 
   for (let index = 0; index < INITIAL_STAR_COUNT; index += 1) {
