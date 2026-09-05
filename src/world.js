@@ -11,6 +11,7 @@ import {
   INK_DROP_MIN_INTERVAL,
   INK_DROP_MIN_RADIUS,
   INK_DROP_MIN_SPEED,
+  PARTICLE_GRAVITY,
   PLAYER_SPEED,
   WORLD_GENERATION_DISTANCE,
 } from "./const.js";
@@ -56,6 +57,8 @@ export function createGame(viewport) {
     comboEffectTime: 0,
     comboEffectMultiplier: 1,
     soundEvents: [],
+    particles: [],
+    loopGlow: null,
   };
 
   for (let index = 0; index < INITIAL_STAR_COUNT; index += 1) {
@@ -141,6 +144,19 @@ export function updateWorld(game, viewport, deltaTime, hazardsEnabled = true) {
 
   for (const inkDrop of game.inkDrops) {
     inkDrop.y += inkDrop.speed * deltaTime;
+  }
+
+  for (const particle of game.particles) {
+    particle.x += particle.velocityX * deltaTime;
+    particle.y += particle.velocityY * deltaTime;
+    particle.velocityY += PARTICLE_GRAVITY * deltaTime;
+    particle.life -= deltaTime;
+  }
+  game.particles = game.particles.filter((particle) => particle.life > 0);
+
+  if (game.loopGlow) {
+    game.loopGlow.life -= deltaTime;
+    if (game.loopGlow.life <= 0) game.loopGlow = null;
   }
 
   game.clouds = game.clouds.filter(

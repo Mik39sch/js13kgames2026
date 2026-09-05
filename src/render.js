@@ -38,6 +38,59 @@ function drawStars(context, game, viewport) {
   context.globalAlpha = 1;
 }
 
+/** 直前に完成した輪の内側を、短時間だけ淡く発光させる。 */
+function drawLoopGlow(context, game) {
+  if (!game.loopGlow) return;
+
+  const alpha = game.loopGlow.life / game.loopGlow.maximumLife;
+  context.save();
+  context.globalAlpha = alpha * 0.28;
+  context.fillStyle = game.loopGlow.isStar ? "#ffe87a" : "#fff";
+  context.shadowColor = game.loopGlow.isStar ? "#ffd84f" : "#f3d9ff";
+  context.shadowBlur = 24;
+  context.beginPath();
+  game.loopGlow.points.forEach((point, index) => {
+    const screenY = worldToScreenY(game, point.y);
+    if (index === 0) context.moveTo(point.x, screenY);
+    else context.lineTo(point.x, screenY);
+  });
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
+/** 取得した雲やスターから飛び散る虹色の粒と輝きを描画する。 */
+function drawCaptureParticles(context, game) {
+  for (const particle of game.particles) {
+    const alpha = Math.min(1, particle.life / particle.maximumLife * 1.7);
+    const screenY = worldToScreenY(game, particle.y);
+    context.save();
+    context.globalAlpha = alpha;
+    context.fillStyle = particle.color;
+    context.translate(particle.x, screenY);
+
+    if (particle.sparkle) {
+      const radius = particle.radius * (1 + (1 - alpha) * 0.8);
+      context.beginPath();
+      context.moveTo(0, -radius * 1.8);
+      context.lineTo(radius * 0.45, -radius * 0.45);
+      context.lineTo(radius * 1.8, 0);
+      context.lineTo(radius * 0.45, radius * 0.45);
+      context.lineTo(0, radius * 1.8);
+      context.lineTo(-radius * 0.45, radius * 0.45);
+      context.lineTo(-radius * 1.8, 0);
+      context.lineTo(-radius * 0.45, -radius * 0.45);
+      context.closePath();
+      context.fill();
+    } else {
+      context.beginPath();
+      context.arc(0, 0, particle.radius, 0, Math.PI * 2);
+      context.fill();
+    }
+    context.restore();
+  }
+}
+
 /** 灰色または取得済みのカラフルな雲を描画する。 */
 function drawCloud(context, game, cloud) {
   const fillColor = cloud.isColorful
@@ -546,8 +599,10 @@ function drawGameOver(context, game, viewport) {
 export function drawGame(context, game, viewport) {
   drawSky(context, viewport);
   drawStars(context, game, viewport);
+  drawLoopGlow(context, game);
   game.clouds.forEach((cloud) => drawCloud(context, game, cloud));
   game.bonusStars.forEach((star) => drawBonusStar(context, game, star));
+  drawCaptureParticles(context, game);
   game.inkDrops.forEach((inkDrop) => drawInkDrop(context, game, inkDrop));
   drawRainbow(context, game);
   drawUnicorn(context, game);

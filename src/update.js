@@ -6,11 +6,19 @@ import {
   COMBO_RAINBOW_DURATION,
   MINIMUM_RAINBOW_DURATION,
   MINIMUM_LOOP_LENGTH,
+  LOOP_GLOW_DURATION,
+  MAX_CAPTURE_PARTICLES,
+  PARTICLE_LIFETIME,
+  PARTICLE_MAX_SPEED,
+  PARTICLE_MIN_SPEED,
+  PARTICLES_PER_CLOUD,
+  PARTICLES_PER_STAR,
   PLAYER_COLLISION_RADIUS,
   PLAYER_MAX_SPEED,
   PLAYER_SPEED,
   RAINBOW_CLOSURE_DISTANCE,
   RAINBOW_DURATION,
+  RAINBOW_COLORS,
   SCREEN_EDGE_PADDING,
   SCORE_PER_SPEED_INCREASE,
   STAR_TIME_DURATION,
@@ -55,6 +63,43 @@ function calculateRainbowDuration(baseDuration, playerSpeed) {
 /** 同じフレームで再生する効果音をキューへ追加する。 */
 function queueSound(game, type, properties = {}) {
   game.soundEvents.push({ type, ...properties });
+}
+
+/** 取得した対象の位置から、虹色または金色の粒を放射状に生成する。 */
+function createCaptureParticles(game, clouds, stars) {
+  const sources = [
+    ...clouds.map((cloud) => ({ ...cloud, isStar: false })),
+    ...stars.map((star) => ({ ...star, isStar: true })),
+  ];
+  const particleCount = Math.min(
+    MAX_CAPTURE_PARTICLES,
+    clouds.length * PARTICLES_PER_CLOUD + stars.length * PARTICLES_PER_STAR,
+  );
+
+  for (let index = 0; index < particleCount; index += 1) {
+    const source = sources[index % sources.length];
+    const angle = Math.random() * Math.PI * 2;
+    const speed =
+      PARTICLE_MIN_SPEED +
+      Math.random() * (PARTICLE_MAX_SPEED - PARTICLE_MIN_SPEED);
+    const color = source.isStar
+      ? Math.random() < 0.7
+        ? "#ffe45c"
+        : "#fff8c9"
+      : RAINBOW_COLORS[index % RAINBOW_COLORS.length];
+
+    game.particles.push({
+      x: source.x,
+      y: source.y,
+      velocityX: Math.cos(angle) * speed,
+      velocityY: Math.sin(angle) * speed,
+      life: PARTICLE_LIFETIME * (0.65 + Math.random() * 0.35),
+      maximumLife: PARTICLE_LIFETIME,
+      radius: 2 + Math.random() * 2.5,
+      color,
+      sparkle: source.isStar || index % 4 === 0,
+    });
+  }
 }
 
 /** ゲームオーバーを一度だけ設定し、対応する効果音を予約する。 */
@@ -142,6 +187,14 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
   for (const star of capturedBonusStars) {
     star.isCollected = true;
   }
+
+  createCaptureParticles(game, capturedClouds, capturedBonusStars);
+  game.loopGlow = {
+    points: loop,
+    life: LOOP_GLOW_DURATION,
+    maximumLife: LOOP_GLOW_DURATION,
+    isStar: capturedBonusStars.length > 0,
+  };
 
   game.score += earnedScore;
   game.player.speed = calculatePlayerSpeed(game.score);
