@@ -86,6 +86,7 @@ function runFrame(currentTime) {
 
   updateGame(game, input, viewport, deltaTime);
   audio.playEvents(game.soundEvents);
+  audio.updateMusic(!game.isGameOver, game.starTimeRemaining > 0);
 
   if (game.isGameOver && !game.isScoreRecorded) {
     game.highScores = recordHighScore(game.score);
