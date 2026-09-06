@@ -3,6 +3,8 @@ import {
   BONUS_STAR_MAX_SPACING,
   BONUS_STAR_MIN_SPACING,
   BONUS_STAR_RADIUS,
+  CLOUD_MAX_SPACING,
+  CLOUD_MIN_SPACING,
   INITIAL_CLOUD_COUNT,
   INITIAL_STAR_COUNT,
   INK_DROP_MAX_INTERVAL,
@@ -84,7 +86,10 @@ export function spawnStar(game, viewport) {
 
 /** プレイヤーより先の空に灰色の雲を1つ生成する。 */
 export function spawnCloud(game, viewport) {
-  const y = game.nextCloudY - randomBetween(130, 240);
+  const y = game.nextCloudY - randomBetween(
+    CLOUD_MIN_SPACING,
+    CLOUD_MAX_SPACING,
+  );
   game.nextCloudY = y;
   game.clouds.push({
     x: randomBetween(55, viewport.width - 55),

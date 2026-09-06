@@ -3,9 +3,12 @@ import {
   BONUS_STAR_SCORE,
   COLLISION_IGNORE_POINTS,
   COMBO_EFFECT_DURATION,
+  COMBO_MINIMUM_VIEWPORT_SCALE,
   COMBO_RAINBOW_DURATION,
+  COMBO_REFERENCE_WIDTH,
   MINIMUM_RAINBOW_DURATION,
   MINIMUM_LOOP_LENGTH,
+  MINIMUM_COMBO_DURATION,
   LOOP_GLOW_DURATION,
   MAX_CAPTURE_PARTICLES,
   PARTICLE_LIFETIME,
@@ -57,6 +60,18 @@ function calculateRainbowDuration(baseDuration, playerSpeed) {
   return Math.max(
     MINIMUM_RAINBOW_DURATION,
     baseDuration * PLAYER_SPEED / playerSpeed,
+  );
+}
+
+/** 速度と画面幅を反映し、狭い画面ほど短いコンボ時間を計算する。 */
+function calculateComboDuration(playerSpeed, viewportWidth) {
+  const viewportScale = Math.max(
+    COMBO_MINIMUM_VIEWPORT_SCALE,
+    Math.min(1, viewportWidth / COMBO_REFERENCE_WIDTH),
+  );
+  return Math.max(
+    MINIMUM_COMBO_DURATION,
+    COMBO_RAINBOW_DURATION * PLAYER_SPEED / playerSpeed * viewportScale,
   );
 }
 
@@ -143,7 +158,7 @@ function updatePlayer(game, input, viewport, deltaTime) {
 }
 
 /** 完成した虹の輪を評価し、雲の取得またはゲームオーバーを処理する。 */
-function completeLoop(game, intersection, trailIntersectionIndex) {
+function completeLoop(game, intersection, trailIntersectionIndex, viewport) {
   const loop = [
     intersection,
     ...game.trail.slice(trailIntersectionIndex + 1),
@@ -219,16 +234,16 @@ function completeLoop(game, intersection, trailIntersectionIndex) {
     game.starTimeComboSucceeded = true;
     game.rainbowTimeRemaining = 0;
   } else {
-    game.rainbowTimeRemaining = calculateRainbowDuration(
-      COMBO_RAINBOW_DURATION,
+    game.rainbowTimeRemaining = calculateComboDuration(
       game.player.speed,
+      viewport.width,
     );
   }
   game.trail = [{ x: game.player.x, y: game.player.y }];
 }
 
 /** 新しい軌跡の線分が過去の虹と交差したか調べる。 */
-function checkForTrailIntersection(game, previousPoint, currentPoint) {
+function checkForTrailIntersection(game, previousPoint, currentPoint, viewport) {
   if (game.trail.length <= MINIMUM_LOOP_LENGTH) return false;
 
   // 直近の点は現在描画中の線分なので、衝突対象から除外する。
@@ -243,7 +258,7 @@ function checkForTrailIntersection(game, previousPoint, currentPoint) {
     );
 
     if (intersection) {
-      completeLoop(game, intersection, index);
+      completeLoop(game, intersection, index, viewport);
       return true;
     }
   }
@@ -267,7 +282,7 @@ function checkForTrailIntersection(game, previousPoint, currentPoint) {
   }
 
   if (closestMatch) {
-    completeLoop(game, closestMatch.point, closestMatch.trailIndex);
+    completeLoop(game, closestMatch.point, closestMatch.trailIndex, viewport);
     return true;
   }
 
@@ -275,7 +290,7 @@ function checkForTrailIntersection(game, previousPoint, currentPoint) {
 }
 
 /** プレイヤーの位置を虹の軌跡へ追加し、輪の完成を検出する。 */
-function updateTrail(game) {
+function updateTrail(game, viewport) {
   const previousPoint = game.trail.at(-1);
   const currentPoint = { x: game.player.x, y: game.player.y };
 
@@ -285,14 +300,16 @@ function updateTrail(game) {
       currentPoint.y - previousPoint.y,
     );
     if (distance <= TRAIL_POINT_DISTANCE) return;
-    if (checkForTrailIntersection(game, previousPoint, currentPoint)) return;
+    if (checkForTrailIntersection(game, previousPoint, currentPoint, viewport)) {
+      return;
+    }
   }
 
   game.trail.push(currentPoint);
 }
 
 /** 虹の発動入力と残り時間を更新し、終了時に軌跡を消去する。 */
-function updateRainbow(game, input, deltaTime) {
+function updateRainbow(game, input, viewport, deltaTime) {
   const activationRequested = input.consumeRainbowActivation();
 
   if (
@@ -319,9 +336,9 @@ function updateRainbow(game, input, deltaTime) {
       game.player.speed = calculatePlayerSpeed(game.score);
 
       if (game.starTimeComboSucceeded) {
-        game.rainbowTimeRemaining = calculateRainbowDuration(
-          COMBO_RAINBOW_DURATION,
+        game.rainbowTimeRemaining = calculateComboDuration(
           game.player.speed,
+          viewport.width,
         );
         game.trail = [{ x: game.player.x, y: game.player.y }];
       } else {
@@ -370,12 +387,12 @@ export function updateGame(game, input, viewport, deltaTime) {
   game.elapsedTime += deltaTime;
   if (game.isGameOver) return;
 
-  updateRainbow(game, input, deltaTime);
+  updateRainbow(game, input, viewport, deltaTime);
   updatePlayer(game, input, viewport, deltaTime);
   if (game.isGameOver) return;
 
   if (game.rainbowTimeRemaining > 0 || game.starTimeRemaining > 0) {
-    updateTrail(game);
+    updateTrail(game, viewport);
   }
   updateWorld(game, viewport, deltaTime);
   checkInkDropCollision(game);
